@@ -6,10 +6,12 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "alembic>=1.14.0",
+    "bcrypt>=4.2.0",
     "fastapi>=0.115.0",
     "psycopg[binary]>=3.2.0",
     "pydantic>=2.10.0",
     "pydantic-settings>=2.7.0",
+    "pyjwt>=2.10.0",
     "sqlalchemy>=2.0.36",
     "uvicorn[standard]>=0.34.0",
 ]
@@ -39,7 +41,10 @@ select = [
 ignore = []
 
 [tool.ruff.lint.per-file-ignores]
-"alembic/versions/*" = ["F401", "UP007", "UP035"]
+"alembic/versions/*" = ["F401", "UP007", "UP035", "E501"]
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends", "fastapi.Security"]
 
 [tool.ruff.format]
 quote-style = "double"
