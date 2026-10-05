@@ -16,6 +16,12 @@ from app.schemas.category import (
     CategoryResponse,
     CategorySummary,
 )
+from app.schemas.media import (
+    CompleteUploadRequest,
+    PostImageResponse,
+    UploadUrlRequest,
+    UploadUrlResponse,
+)
 from app.schemas.post import (
     AuthorSummary,
     PostCreateRequest,
@@ -30,10 +36,12 @@ __all__ = [
     "CategoryCreateRequest",
     "CategoryResponse",
     "CategorySummary",
+    "CompleteUploadRequest",
     "LoginRequest",
     "LogoutRequest",
     "MessageResponse",
     "PostCreateRequest",
+    "PostImageResponse",
     "PostListResponse",
     "PostResponse",
     "PostUpdateRequest",
@@ -41,6 +49,8 @@ __all__ = [
     "RegisterRequest",
     "RegisterResponse",
     "TokenResponse",
+    "UploadUrlRequest",
+    "UploadUrlResponse",
     "UserResponse",
     "UserUpdateRequest",
     "VerifyRequest",

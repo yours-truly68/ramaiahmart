@@ -6,6 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.models.post import PostStatus, PostType
 from app.schemas.category import CategorySummary
+from app.schemas.media import PostImageResponse
 
 
 class AuthorSummary(BaseModel):
@@ -76,6 +77,7 @@ class PostResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     published_at: datetime | None = None
+    images: list["PostImageResponse"] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)
 
