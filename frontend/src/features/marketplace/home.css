@@ -9,7 +9,7 @@
 .header-actions { display: flex; align-items: center; gap: 25px; margin-left: auto; font-size: 13px; }
 .text-action { background: none; border: 0; padding: 0; display: inline-flex; align-items: center; justify-content: center; gap: 9px; font-size: inherit; text-decoration: none; min-height: 44px; }
 .header-search { margin-right: 13px; }
-.orange-arrow { border-radius: 50%; background: var(--accent-orange); color: var(--foreground); display: grid; place-items: center; width: 19px; height: 19px; margin-left: 10px; }
+.orange-arrow { border-radius: 50%; background: var(--accent-orange); color: #ffffff; display: grid; place-items: center; width: 19px; height: 19px; margin-left: 10px; }
 .mini-avatar { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-soft-orange); font-weight: 700; }
 .market-hero { position: relative; display: grid; grid-template-columns: 1.4fr 1fr; min-height: 445px; padding-block: 0; }
 .hero-copy { position: relative; z-index: 1; padding-block: 57px 39px; }
@@ -35,8 +35,9 @@
 .category-icon { margin: 13px auto 17px; }
 .category-bottom { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
 .category-bottom strong { font-size: 12px; font-weight: 650; }
-.category-bottom svg { width: 14px; }
+.category-arrow-circle { width: 20px; height: 20px; border-radius: 50%; background: #ffffff77; display: grid; place-items: center; color: #28271e; flex-shrink: 0; }
 .category-selected { outline: 2px solid var(--foreground); outline-offset: 3px; }
+.post-location { display: inline-flex; align-items: center; gap: 4px; font-weight: 500; }
 .tone-peach { background: #f7c8a6; }
 .tone-sage { background: #e2e9c7; }
 .tone-pink { background: #f0d4d9; }

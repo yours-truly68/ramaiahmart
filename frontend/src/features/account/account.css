@@ -141,6 +141,10 @@
 .create-details { display: grid; gap: 20px; }
 .create-details .step-description { margin-bottom: 0; }
 .create-details textarea { resize: vertical; }
+.create-category-tiles { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.create-category-chip { display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--card); font-size: 13px; font-weight: 500; cursor: pointer; color: var(--foreground); transition: border-color var(--duration-fast) var(--ease-out), background-color var(--duration-fast) var(--ease-out); }
+.create-category-chip:hover { border-color: var(--foreground); }
+.create-category-chip.is-selected { border-color: var(--accent-orange); background: var(--accent-soft-orange); color: var(--accent-ink); font-weight: 650; }
 .step-buttons { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 30px; padding-top: 23px; border-top: 1px solid var(--border); }
 .step-buttons > .rm-button:last-child { margin-left: auto; }
 .step-error { margin-top: 18px; }
