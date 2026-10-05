@@ -32,8 +32,9 @@ export function relativeTime(date: string) {
 }
 export function ListingImage({ post, detail = false }: { post: Post; detail?: boolean }) {
   const [failed, setFailed] = useState(false);
-  const image = [...post.images].sort((a, b) => a.position - b.position).find(item => item.public_url && /^https?:\/\//i.test(item.public_url));
-  const { icon: Icon, tone } = categoryStyle(post.category.slug);
+  const images = post?.images ? [...post.images] : [];
+  const image = images.sort((a, b) => a.position - b.position).find(item => item.public_url && /^https?:\/\//i.test(item.public_url));
+  const { icon: Icon, tone } = categoryStyle(post?.category?.slug ?? "");
   return <div className={`listing-photo tone-${tone} ${detail ? "listing-photo--detail" : ""}`}>
     {image && !failed ?
       /* Listing URLs are supplied by the API, including arbitrary S3-compatible hosts. */
