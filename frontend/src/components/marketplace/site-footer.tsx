@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   ArrowUp,
   ArrowUpRight,
@@ -16,6 +17,23 @@ import { openCookiePreferencesModal } from "@/lib/cookie-consent";
 
 export function SiteFooter() {
   const currentYear = new Date().getFullYear();
+  const pathname = usePathname();
+
+  const handleNavScroll = (event: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    if (pathname === "/" && href.startsWith("/#")) {
+      const id = href.replace("/#", "");
+      const element = document.getElementById(id);
+      if (element) {
+        event.preventDefault();
+        const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        element.scrollIntoView({
+          behavior: prefersReducedMotion ? "auto" : "smooth",
+          block: "start",
+        });
+        window.history.pushState(null, "", href);
+      }
+    }
+  };
 
   const scrollToTop = () => {
     if (typeof window !== "undefined") {
@@ -74,11 +92,11 @@ export function SiteFooter() {
         <div className="footer-col">
           <h3 className="footer-col-title">Marketplace</h3>
           <nav aria-label="Marketplace directory" className="footer-link-list">
-            <Link href="/#recent">Latest campus listings</Link>
-            <Link href="/#categories">Browse by category</Link>
+            <Link href="/#recent" onClick={e => handleNavScroll(e, "/#recent")}>Latest campus listings</Link>
+            <Link href="/#categories" onClick={e => handleNavScroll(e, "/#categories")}>Browse by category</Link>
             <Link href="/post/create?type=OFFER">List an item (Sell / Rent)</Link>
             <Link href="/post/create?type=REQUEST">Request what you need</Link>
-            <Link href="/#how-it-works">How campus hand-off works</Link>
+            <Link href="/#how-it-works" onClick={e => handleNavScroll(e, "/#how-it-works")}>How campus hand-off works</Link>
           </nav>
         </div>
 
