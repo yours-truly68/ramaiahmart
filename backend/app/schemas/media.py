@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator
 
 from app.core.config import settings
 
@@ -17,6 +17,13 @@ class PostImageResponse(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_serializer("public_url")
+    def resolve_image_url(self, value: str | None) -> str:
+        # Refresh expiring URLs at read time; the canonical key remains in the DB.
+        from app.services.storage import storage_service
+
+        return storage_service.generate_download_url(self.storage_key)
 
 
 class UploadUrlRequest(BaseModel):

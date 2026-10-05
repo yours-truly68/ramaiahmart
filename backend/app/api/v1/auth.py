@@ -268,3 +268,13 @@ def logout(
         db.commit()
 
     return MessageResponse(message="Logged out successfully.")
+
+
+@router.get("/config", summary="Public registration requirements")
+def auth_config() -> dict:
+    return {
+        "allowed_email_domains": settings.ALLOWED_EMAIL_DOMAINS,
+        "password_min_length": 8,
+        "verification_code_available": settings.DEBUG or settings.APP_ENV != "production",
+        "email_delivery_available": False,
+    }

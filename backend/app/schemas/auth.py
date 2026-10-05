@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class RegisterRequest(BaseModel):
@@ -7,6 +7,21 @@ class RegisterRequest(BaseModel):
     email: str = Field(..., description="University email address")
     password: str = Field(..., min_length=8, description="Account password (min 8 chars)")
     name: str = Field(..., min_length=2, max_length=255, description="Full name")
+
+    @field_validator("name", "email")
+    @classmethod
+    def trim_identity(cls, value: str) -> str:
+        clean = value.strip()
+        if len(clean) < 2:
+            raise ValueError("Enter a valid name or email.")
+        return clean
+
+    @field_validator("password")
+    @classmethod
+    def bcrypt_limit(cls, value: str) -> str:
+        if len(value.encode("utf-8")) > 72:
+            raise ValueError("Password exceeds 72 UTF-8 bytes.")
+        return value
 
 
 class RegisterResponse(BaseModel):

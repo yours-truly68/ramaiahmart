@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     EMAIL_VERIFICATION_EXPIRE_MINUTES: int = 60
 
     # University Verification
-    ALLOWED_EMAIL_DOMAINS: list[str] = ["ramaiah.edu", "msrit.edu", "gmail.com"]
+    ALLOWED_EMAIL_DOMAINS: list[str] = ["ramaiah.edu", "msrit.edu"]
 
     # Object Storage (MinIO locally / AWS S3 in production)
     S3_ENDPOINT_URL: str | None = None

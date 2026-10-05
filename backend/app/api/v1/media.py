@@ -208,3 +208,11 @@ def delete_media(
     db.commit()
 
     return MessageResponse(message="Media item deleted successfully.")
+
+
+@router.get("/config", summary="Supported image uploads")
+def media_config() -> dict:
+    return {
+        "max_file_size": settings.MAX_UPLOAD_SIZE_BYTES,
+        "content_types": settings.ALLOWED_IMAGE_MIME_TYPES,
+    }
