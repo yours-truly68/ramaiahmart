@@ -41,9 +41,23 @@ class Settings(BaseSettings):
     MAX_UPLOAD_SIZE_BYTES: int = 10 * 1024 * 1024  # 10 MB
     ALLOWED_IMAGE_MIME_TYPES: list[str] = ["image/jpeg", "image/png", "image/webp"]
 
+    # Database Connection Pooling (Production RDS / Local Postgres)
+    DB_POOL_SIZE: int = 10
+    DB_MAX_OVERFLOW: int = 20
+    DB_POOL_TIMEOUT: int = 30
+    DB_POOL_RECYCLE: int = 1800
+
+    # CORS Origins
+    CORS_ORIGINS: list[str] = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:8000",
+    ]
+
     @field_validator(
         "ALLOWED_EMAIL_DOMAINS",
         "ALLOWED_IMAGE_MIME_TYPES",
+        "CORS_ORIGINS",
         mode="before",
     )
     @classmethod
