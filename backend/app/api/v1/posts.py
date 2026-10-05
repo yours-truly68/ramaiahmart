@@ -4,7 +4,7 @@ import uuid
 from fastapi import APIRouter, Depends, Query, status
 from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.api.deps import get_current_user, security_scheme
 from app.core.errors import AppException
@@ -84,7 +84,11 @@ def list_posts(
     base_query = (
         select(Post)
         .join(Post.category)
-        .options(joinedload(Post.author), joinedload(Post.category))
+        .options(
+            joinedload(Post.author),
+            joinedload(Post.category),
+            selectinload(Post.images),
+        )
         .where(Post.status == PostStatus.PUBLISHED)
     )
 
@@ -138,7 +142,11 @@ def get_post(
     """Retrieve post details. Published posts are public; drafts are restricted to author."""
     post = db.scalar(
         select(Post)
-        .options(joinedload(Post.author), joinedload(Post.category))
+        .options(
+            joinedload(Post.author),
+            joinedload(Post.category),
+            selectinload(Post.images),
+        )
         .where(Post.id == post_id)
     )
     if post is None:
@@ -189,7 +197,11 @@ def update_post(
     """Update post title, description, price, or category. Author only."""
     post = db.scalar(
         select(Post)
-        .options(joinedload(Post.author), joinedload(Post.category))
+        .options(
+            joinedload(Post.author),
+            joinedload(Post.category),
+            selectinload(Post.images),
+        )
         .where(Post.id == post_id)
     )
     if post is None:
@@ -298,7 +310,11 @@ def publish_post(
 
     post = db.scalar(
         select(Post)
-        .options(joinedload(Post.author), joinedload(Post.category))
+        .options(
+            joinedload(Post.author),
+            joinedload(Post.category),
+            selectinload(Post.images),
+        )
         .where(Post.id == post_id)
     )
     if post is None:
@@ -341,7 +357,11 @@ def close_post(
     """Close post when sold, rented, or fulfilled. Author only."""
     post = db.scalar(
         select(Post)
-        .options(joinedload(Post.author), joinedload(Post.category))
+        .options(
+            joinedload(Post.author),
+            joinedload(Post.category),
+            selectinload(Post.images),
+        )
         .where(Post.id == post_id)
     )
     if post is None:
