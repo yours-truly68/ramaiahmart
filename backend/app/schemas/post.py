@@ -23,6 +23,8 @@ class AuthorSummary(BaseModel):
 class PostCreateRequest(BaseModel):
     """Payload to create a new marketplace post."""
 
+    model_config = ConfigDict(str_strip_whitespace=True)
+
     type: PostType = Field(..., description="PostType: OFFER or REQUEST")
     category_id: uuid.UUID = Field(..., description="Category UUID")
     title: str = Field(..., min_length=3, max_length=255, description="Listing title")
@@ -48,6 +50,8 @@ class PostCreateRequest(BaseModel):
 
 class PostUpdateRequest(BaseModel):
     """Payload to update an existing draft or published post."""
+
+    model_config = ConfigDict(str_strip_whitespace=True)
 
     category_id: uuid.UUID | None = None
     title: str | None = Field(default=None, min_length=3, max_length=255)

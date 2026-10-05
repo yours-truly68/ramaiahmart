@@ -3,7 +3,7 @@ import uuid
 
 from fastapi import APIRouter, Depends, Query, status
 from fastapi.security import HTTPAuthorizationCredentials
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.api.deps import get_current_user, get_moderation_service, security_scheme
@@ -73,6 +73,7 @@ def create_post(
     summary="Get public published posts feed",
 )
 def list_posts(
+    q: str | None = Query(default=None, max_length=200, description="Search title and description"),
     category_id: uuid.UUID | None = Query(default=None, description="Filter by category UUID"),
     category_slug: str | None = Query(default=None, description="Filter by category slug"),
     type: PostType | None = Query(default=None, description="Filter by OFFER or REQUEST"),
@@ -92,32 +93,33 @@ def list_posts(
         .where(Post.status == PostStatus.PUBLISHED)
     )
 
+    filters = []
     if category_id is not None:
-        base_query = base_query.where(Post.category_id == category_id)
-
+        filters.append(Post.category_id == category_id)
     if category_slug is not None:
-        base_query = base_query.where(Category.slug == category_slug.strip().lower())
-
+        filters.append(Category.slug == category_slug.strip().lower())
     if type is not None:
-        base_query = base_query.where(Post.type == type)
-
-    # Count total matching rows
-    count_subquery = (
-        select(func.count(Post.id)).join(Post.category).where(Post.status == PostStatus.PUBLISHED)
-    )
-    if category_id is not None:
-        count_subquery = count_subquery.where(Post.category_id == category_id)
-    if category_slug is not None:
-        count_subquery = count_subquery.where(Category.slug == category_slug.strip().lower())
-    if type is not None:
-        count_subquery = count_subquery.where(Post.type == type)
+        filters.append(Post.type == type)
+    if q and q.strip():
+        # Treat SQL wildcard characters as literal search text.
+        term = q.strip().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        filters.append(
+            or_(
+                Post.title.ilike(f"%{term}%", escape="\\"),
+                Post.description.ilike(f"%{term}%", escape="\\"),
+            )
+        )
+    base_query = base_query.where(*filters)
+    count_subquery = select(func.count()).select_from(base_query.subquery())
 
     total = db.scalar(count_subquery) or 0
     pages = math.ceil(total / page_size) if total > 0 else 0
 
     # Paginate and order by recency
     offset = (page - 1) * page_size
-    stmt = base_query.order_by(Post.created_at.desc()).offset(offset).limit(page_size)
+    stmt = (
+        base_query.order_by(Post.created_at.desc(), Post.id.desc()).offset(offset).limit(page_size)
+    )
     items = db.scalars(stmt).all()
 
     return PostListResponse(
@@ -244,10 +246,14 @@ def update_post(
         post.title = data.title.strip()
     if data.description is not None:
         post.description = data.description.strip()
-    if data.price is not None:
+    if "price" in data.model_fields_set:
+        if post.type == PostType.OFFER and data.price is None:
+            raise AppException(
+                code="PRICE_REQUIRED", message="An offer requires a price.", status_code=422
+            )
         post.price = data.price
-    if data.price_unit is not None:
-        post.price_unit = data.price_unit.strip()
+    if "price_unit" in data.model_fields_set:
+        post.price_unit = data.price_unit.strip() if data.price_unit else None
 
     db.commit()
     db.refresh(post)
