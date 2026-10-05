@@ -6,7 +6,7 @@ from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, joinedload, selectinload
 
-from app.api.deps import get_current_user, security_scheme
+from app.api.deps import get_current_user, get_moderation_service, security_scheme
 from app.core.errors import AppException
 from app.core.security import decode_token
 from app.db.session import get_db
@@ -20,7 +20,7 @@ from app.schemas.post import (
     PostResponse,
     PostUpdateRequest,
 )
-from app.services.moderation import moderation_service
+from app.services.moderation import ModerationService
 
 router = APIRouter(prefix="/posts", tags=["Posts"])
 
@@ -296,10 +296,13 @@ def publish_post(
     post_id: uuid.UUID,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
+    moderation_service: ModerationService = Depends(get_moderation_service),
 ) -> PostResponse:
     """Submit post for publication.
 
-    Requires university verification. Transitions DRAFT -> PENDING_REVIEW.
+    Requires university verification. Evaluates post through moderation service.
+    Transitions DRAFT/REJECTED -> PUBLISHED (if approved), PENDING_REVIEW (if review),
+    or REJECTED (if rejected/prohibited).
     """
     if not current_user.university_verified:
         raise AppException(
@@ -339,7 +342,7 @@ def publish_post(
         )
 
     # Route through moderation service boundary
-    post = moderation_service.submit_for_review(post, db)
+    post = moderation_service.process_post_publication(post, db)
 
     return PostResponse.model_validate(post)
 

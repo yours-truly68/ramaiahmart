@@ -12,6 +12,7 @@ from app.db.session import get_db
 from app.models.user import User
 
 if TYPE_CHECKING:
+    from app.services.moderation import ModerationService
     from app.services.storage import StorageService
 
 
@@ -93,3 +94,10 @@ def get_storage_service() -> "StorageService":
     from app.services.storage import storage_service
 
     return storage_service
+
+
+def get_moderation_service() -> "ModerationService":
+    """Dependency providing moderation service instance."""
+    from app.services.moderation import moderation_service
+
+    return moderation_service

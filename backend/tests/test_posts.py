@@ -311,7 +311,8 @@ async def test_publish_flow_and_moderation_transition(test_category: Category) -
         # Now verify student email
         await client.post("/api/v1/auth/verify", json={"email": email, "code": code})
 
-        # Publishing now succeeds and transitions DRAFT -> PENDING_REVIEW
+        # Publishing now succeeds: moderation approves clean listing -> PUBLISHED
         pub_res = await client.post(f"/api/v1/posts/{post_id}/publish", headers=headers)
         assert pub_res.status_code == 200
-        assert pub_res.json()["status"] == "PENDING_REVIEW"
+        assert pub_res.json()["status"] == "PUBLISHED"
+        assert pub_res.json()["published_at"] is not None
