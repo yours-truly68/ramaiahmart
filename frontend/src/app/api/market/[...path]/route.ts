@@ -41,11 +41,11 @@ async function proxy(
   const postPath = new RegExp(`^posts/${uuid}$`).test(path);
   const allowed =
     method === "GET"
-      ? /^(categories|posts|users\/me(?:\/posts|\/stats)?|auth\/config|media\/config)$/.test(
+      ? /^(categories|posts|users\/me(?:\/posts|\/stats)?|auth\/config|media\/config|legal\/(documents(?:\/[A-Za-z_-]+)?|consent-status))$/.test(
           path,
         ) || postPath
       : method === "POST"
-        ? /^(auth\/(login|register|verify|logout)|posts|media\/(upload-url|complete))$/.test(
+        ? /^(auth\/(login|register|verify|logout|resend-verification)|posts|media\/(upload-url|complete)|legal\/consent)$/.test(
             path,
           ) || new RegExp(`^posts/${uuid}/(publish|close)$`).test(path)
         : method === "PATCH"

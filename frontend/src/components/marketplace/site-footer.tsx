@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
+import { openCookiePreferencesModal } from "@/lib/cookie-consent";
 
 export function SiteFooter() {
   const currentYear = new Date().getFullYear();
@@ -164,6 +165,25 @@ export function SiteFooter() {
           <p className="footer-copyright">
             © {currentYear} RamaiahMart · Developed for Ramaiah Institute of Technology students.
           </p>
+
+          <nav className="footer-legal-row" aria-label="Legal and privacy links">
+            <Link href="/terms" className="cookie-link">
+              Terms &amp; Conditions
+            </Link>
+            <span aria-hidden="true">·</span>
+            <Link href="/privacy" className="cookie-link">
+              Privacy Policy
+            </Link>
+            <span aria-hidden="true">·</span>
+            <button
+              type="button"
+              className="footer-legal-btn"
+              onClick={openCookiePreferencesModal}
+            >
+              Cookie Preferences
+            </button>
+          </nav>
+
           <div className="footer-badges">
             <span className="badge-item">
               <Sparkles size={12} aria-hidden="true" />
