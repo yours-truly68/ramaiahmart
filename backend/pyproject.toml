@@ -44,7 +44,13 @@ ignore = []
 "alembic/versions/*" = ["F401", "UP007", "UP035", "E501"]
 
 [tool.ruff.lint.flake8-bugbear]
-extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends", "fastapi.Security"]
+extend-immutable-calls = [
+    "fastapi.Depends",
+    "fastapi.params.Depends",
+    "fastapi.Security",
+    "fastapi.Query",
+    "fastapi.params.Query",
+]
 
 [tool.ruff.format]
 quote-style = "double"
