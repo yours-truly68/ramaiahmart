@@ -1,10 +1,15 @@
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+import math
+
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.api.deps import get_current_user
 from app.db.session import get_db
+from app.models.post import Post, PostStatus, PostType
 from app.models.user import User
-from app.schemas.user import UserResponse, UserUpdateRequest
+from app.schemas.post import PostListResponse, PostResponse
+from app.schemas.user import UserPostStats, UserResponse, UserUpdateRequest
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -43,3 +48,49 @@ def update_me(
     db.refresh(current_user)
 
     return UserResponse.model_validate(current_user)
+
+
+@router.get("/me/posts", response_model=PostListResponse, summary="List all of my posts")
+def my_posts(
+    type: PostType | None = Query(default=None),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=12, ge=1, le=100),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> PostListResponse:
+    filters = [Post.author_id == current_user.id]
+    if type is not None:
+        filters.append(Post.type == type)
+    total = db.scalar(select(func.count(Post.id)).where(*filters)) or 0
+    rows = db.scalars(
+        select(Post)
+        .where(*filters)
+        .options(joinedload(Post.author), joinedload(Post.category), selectinload(Post.images))
+        .order_by(Post.created_at.desc(), Post.id.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    ).all()
+    return PostListResponse(
+        items=[PostResponse.model_validate(post) for post in rows],
+        total=total,
+        page=page,
+        page_size=page_size,
+        pages=math.ceil(total / page_size),
+    )
+
+
+@router.get("/me/stats", response_model=UserPostStats, summary="Counts of my marketplace posts")
+def my_stats(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> UserPostStats:
+    rows = db.execute(
+        select(Post.type, Post.status, func.count(Post.id))
+        .where(Post.author_id == current_user.id)
+        .group_by(Post.type, Post.status)
+    ).all()
+    return UserPostStats(
+        listings=sum(count for kind, _, count in rows if kind == PostType.OFFER),
+        requests=sum(count for kind, _, count in rows if kind == PostType.REQUEST),
+        published=sum(count for _, status, count in rows if status == PostStatus.PUBLISHED),
+    )
