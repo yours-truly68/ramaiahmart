@@ -7,6 +7,14 @@ class RegisterRequest(BaseModel):
     email: str = Field(..., description="University email address")
     password: str = Field(..., min_length=8, description="Account password (min 8 chars)")
     name: str = Field(..., min_length=2, max_length=255, description="Full name")
+    accepted_terms: bool = Field(
+        default=False,
+        description="Explicit user consent to platform Terms & Conditions",
+    )
+    accepted_privacy: bool = Field(
+        default=False,
+        description="Explicit user consent to platform Privacy Policy",
+    )
 
     @field_validator("name", "email")
     @classmethod
@@ -47,6 +55,12 @@ class VerifyResponse(BaseModel):
 
     message: str
     university_verified: bool
+
+
+class ResendVerificationRequest(BaseModel):
+    """University email verification resend request."""
+
+    email: str = Field(..., description="Registered email address")
 
 
 class LoginRequest(BaseModel):

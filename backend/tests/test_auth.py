@@ -22,6 +22,8 @@ async def test_auth_registration_and_verification_flow() -> None:
             "email": unique_email,
             "password": "SecurePassword123!",
             "name": "Test Student",
+            "accepted_terms": True,
+            "accepted_privacy": True,
         }
         reg_res = await client.post("/api/v1/auth/register", json=reg_payload)
         assert reg_res.status_code == 201
@@ -122,6 +124,8 @@ async def test_auth_invalid_credentials_and_expired_tokens() -> None:
                 "email": "hacker@unknown-domain.com",
                 "password": "Password123!",
                 "name": "Attacker",
+                "accepted_terms": True,
+                "accepted_privacy": True,
             },
         )
         assert res.status_code == 400

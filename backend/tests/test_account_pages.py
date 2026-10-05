@@ -18,6 +18,8 @@ def test_private_inventory_stats_edit_and_request_budget_clear():
                 "name": name,
                 "email": email,
                 "password": "CampusPassword123!",
+                "accepted_terms": True,
+                "accepted_privacy": True,
             },
         )
         assert registration.status_code == 201

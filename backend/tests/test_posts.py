@@ -46,7 +46,13 @@ async def test_posts_creation_and_validation(test_category: Category) -> None:
         email = f"seller_{uuid.uuid4().hex[:8]}@ramaiah.edu"
         await client.post(
             "/api/v1/auth/register",
-            json={"email": email, "password": "Password123!", "name": "Seller Student"},
+            json={
+                "email": email,
+                "password": "Password123!",
+                "name": "Seller Student",
+                "accepted_terms": True,
+                "accepted_privacy": True,
+            },
         )
         login_res = await client.post(
             "/api/v1/auth/login",
@@ -121,7 +127,13 @@ async def test_posts_authorization_updates_and_deletion(test_category: Category)
         email_a = f"author_{uuid.uuid4().hex[:8]}@ramaiah.edu"
         await client.post(
             "/api/v1/auth/register",
-            json={"email": email_a, "password": "Password123!", "name": "Author User"},
+            json={
+                "email": email_a,
+                "password": "Password123!",
+                "name": "Author User",
+                "accepted_terms": True,
+                "accepted_privacy": True,
+            },
         )
         login_a = await client.post(
             "/api/v1/auth/login",
@@ -133,7 +145,13 @@ async def test_posts_authorization_updates_and_deletion(test_category: Category)
         email_b = f"stranger_{uuid.uuid4().hex[:8]}@ramaiah.edu"
         await client.post(
             "/api/v1/auth/register",
-            json={"email": email_b, "password": "Password123!", "name": "Stranger User"},
+            json={
+                "email": email_b,
+                "password": "Password123!",
+                "name": "Stranger User",
+                "accepted_terms": True,
+                "accepted_privacy": True,
+            },
         )
         login_b = await client.post(
             "/api/v1/auth/login",
@@ -280,7 +298,13 @@ async def test_publish_flow_and_moderation_transition(test_category: Category) -
         email = f"verified_publisher_{uuid.uuid4().hex[:8]}@ramaiah.edu"
         reg_res = await client.post(
             "/api/v1/auth/register",
-            json={"email": email, "password": "Password123!", "name": "Verified Student"},
+            json={
+                "email": email,
+                "password": "Password123!",
+                "name": "Verified Student",
+                "accepted_terms": True,
+                "accepted_privacy": True,
+            },
         )
         code = reg_res.json()["verification_code"]
 

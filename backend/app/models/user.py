@@ -10,6 +10,7 @@ from app.db.base import Base
 if TYPE_CHECKING:
     from app.models.auth import EmailVerificationCode, RefreshToken
     from app.models.conversation import Conversation
+    from app.models.legal import LegalConsent
     from app.models.message import Message
     from app.models.post import Post
 
@@ -97,6 +98,11 @@ class User(Base):
     )
     verification_codes: Mapped[list["EmailVerificationCode"]] = relationship(
         "EmailVerificationCode",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    legal_consents: Mapped[list["LegalConsent"]] = relationship(
+        "LegalConsent",
         back_populates="user",
         cascade="all, delete-orphan",
     )
