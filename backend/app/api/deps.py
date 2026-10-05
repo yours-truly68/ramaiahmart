@@ -1,4 +1,5 @@
 import uuid
+from typing import TYPE_CHECKING
 
 from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -9,6 +10,10 @@ from app.core.errors import AppException
 from app.core.security import decode_token
 from app.db.session import get_db
 from app.models.user import User
+
+if TYPE_CHECKING:
+    from app.services.storage import StorageService
+
 
 security_scheme = HTTPBearer(auto_error=False)
 
@@ -81,3 +86,10 @@ def get_current_verified_user(
             status_code=403,
         )
     return current_user
+
+
+def get_storage_service() -> "StorageService":
+    """Dependency providing storage service instance."""
+    from app.services.storage import storage_service
+
+    return storage_service

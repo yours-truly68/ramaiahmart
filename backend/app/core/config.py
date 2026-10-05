@@ -30,9 +30,24 @@ class Settings(BaseSettings):
     # University Verification
     ALLOWED_EMAIL_DOMAINS: list[str] = ["ramaiah.edu", "msrit.edu", "gmail.com"]
 
-    @field_validator("ALLOWED_EMAIL_DOMAINS", mode="before")
+    # Object Storage (MinIO locally / AWS S3 in production)
+    S3_ENDPOINT_URL: str | None = None
+    S3_PUBLIC_ENDPOINT_URL: str | None = None
+    AWS_ACCESS_KEY_ID: str = "minioadmin"
+    AWS_SECRET_ACCESS_KEY: str = "minioadmin"
+    AWS_REGION: str = "us-east-1"
+    S3_BUCKET_NAME: str = "ramaiahmart-media"
+    STORAGE_PRESIGNED_EXPIRATION_SECONDS: int = 900
+    MAX_UPLOAD_SIZE_BYTES: int = 10 * 1024 * 1024  # 10 MB
+    ALLOWED_IMAGE_MIME_TYPES: list[str] = ["image/jpeg", "image/png", "image/webp"]
+
+    @field_validator(
+        "ALLOWED_EMAIL_DOMAINS",
+        "ALLOWED_IMAGE_MIME_TYPES",
+        mode="before",
+    )
     @classmethod
-    def parse_allowed_domains(cls, v: Any) -> list[str]:
+    def parse_string_list(cls, v: Any) -> list[str]:
         if isinstance(v, str):
             v = v.strip()
             if v.startswith("[") and v.endswith("]"):
