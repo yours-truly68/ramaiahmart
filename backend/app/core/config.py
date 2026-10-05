@@ -1,7 +1,7 @@
 import json
 from typing import Any
 
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -54,10 +54,20 @@ class Settings(BaseSettings):
         "http://localhost:8000",
     ]
 
+    # Trusted Reverse Proxies (CIDR or IPs)
+    TRUSTED_PROXIES: list[str] = [
+        "127.0.0.1",
+        "::1",
+        "10.0.0.0/8",
+        "172.16.0.0/12",
+        "192.168.0.0/16",
+    ]
+
     @field_validator(
         "ALLOWED_EMAIL_DOMAINS",
         "ALLOWED_IMAGE_MIME_TYPES",
         "CORS_ORIGINS",
+        "TRUSTED_PROXIES",
         mode="before",
     )
     @classmethod
@@ -71,6 +81,24 @@ class Settings(BaseSettings):
                     pass
             return [d.strip() for d in v.split(",") if d.strip()]
         return v
+
+    @model_validator(mode="after")
+    def validate_production_security(self) -> "Settings":
+        """Fail fast if insecure fallback secrets are used in production."""
+        if self.APP_ENV == "production":
+            dev_default = "dev-insecure-secret-key-change-in-production-min-32-chars"
+            if not self.JWT_SECRET_KEY or self.JWT_SECRET_KEY == dev_default:
+                raise ValueError(
+                    "Production configuration requires a dedicated, secure JWT_SECRET_KEY. "
+                    "Cannot use the default development secret."
+                )
+            if len(self.JWT_SECRET_KEY) < 32:
+                raise ValueError(
+                    "JWT_SECRET_KEY must be at least 32 characters in production."
+                )
+            if self.DEBUG:
+                raise ValueError("DEBUG mode must be set to False in production.")
+        return self
 
     def is_university_email(self, email: str) -> bool:
         """Check if email matches configured university domains."""

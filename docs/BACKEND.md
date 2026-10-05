@@ -527,3 +527,91 @@ Do not introduce:
 - complicated repository abstractions everywhere
 - vector database
 - Elasticsearch before basic search requirements are validated
+
+---
+
+## 18. Production Reverse Proxy Architecture (Phase 1)
+
+In production, FastAPI is never exposed directly to the public Internet. Instead, an `nginx:alpine` reverse proxy serves as the sole public gateway.
+
+```text
+Internet
+  ↓ (ports 80, 443)
+Nginx (nginx:alpine)
+  ↓ (internal Docker network: http://backend_api:8000)
+FastAPI (Uvicorn)
+  ↓
+PostgreSQL / MinIO / S3
+```
+
+### Network Topology & Port Exposure
+- **Publicly Exposed Ports:** `80` (HTTP) and `443` (HTTPS).
+- **FastAPI Port:** `8000` is bound internally only within the Docker network (`expose: ["8000"]`). In development Docker Compose, Nginx also listens on port 8000 for convenience and proxies it directly to FastAPI.
+- **TLS Termination:**
+  - Production TLS template is located at `backend/nginx/conf.d/ssl_production_template.conf`.
+  - Mount real certificates at `/etc/nginx/certs/fullchain.pem` and `/etc/nginx/certs/privkey.pem`.
+  - HTTP automatically redirects to HTTPS via 301 in production mode.
+  - Strict security headers configured: HSTS, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`.
+
+### Reverse Proxy & Sanitized Logging
+- **Header Forwarding:** Nginx forwards `Host`, `X-Real-IP`, `X-Forwarded-For`, and `X-Forwarded-Proto`. It also generates or forwards `X-Request-ID`.
+- **Request Size & Timeouts:** Client body size limit configured to `25M` (supporting direct image uploads/profiles while preventing memory abuse). Connect/read/send timeouts set to `60s`.
+- **Sanitized Logging:** Access log format is strictly sanitized: passwords, OTPs, JWT tokens, and `Authorization` headers are scrubbed from all Nginx and FastAPI logs.
+
+---
+
+## 19. Rate Limiting Architecture & Policies (Phase 3)
+
+Defense-in-depth is implemented via a dual-layer strategy: coarse IP rate limiting at Nginx, and fine-grained, context-aware rate limiting at the FastAPI application layer.
+
+### Why Redis is Intentionally Not Used in V1
+For V1's single-instance deployment, Redis introduces unnecessary operational complexity, memory overhead, and maintenance burden. Instead, an in-process, thread-safe sliding window rate limiter (`InMemoryRateLimiterStorage`) is used.
+It implements the `RateLimiterStorage` protocol (`check_and_record`, `record_failure`, `get_failures`, `reset`, `increment_attempts`), ensuring a seamless drop-in migration to Redis (`RedisRateLimiterStorage`) when multi-instance scaling is required without modifying route handlers.
+
+### Layer 1: Nginx Coarse Protection
+- Global API limit: `30 req/s` (burst 50) using `limit_req_zone $binary_remote_addr`.
+- Auth endpoints coarse throttle: `15 req/m` (burst 10) to stop volumetric bot attacks.
+- Connection limit: max 20 concurrent connections per IP.
+- Healthcheck endpoint (`/api/v1/health`): exempt from rate limiting for reliable monitoring.
+
+### Layer 2: FastAPI Context-Aware Protection
+Campus networks route hundreds of students through shared NAT public IPs. FastAPI's `RateLimiter` balances abuse prevention with campus NAT tolerance:
+
+1. **Login (`POST /api/v1/auth/login`)**:
+   - IP policy: 15 failed attempts per 15 minutes (generous for campus NAT).
+   - Account policy: 5 failed attempts per 15 minutes per email (prevents credential stuffing).
+   - Only *failed* attempts count against the limit. Successful logins reset the email failure counter.
+   - Does not reveal whether an email exists.
+2. **Registration (`POST /api/v1/auth/register`)**:
+   - IP policy: 10 registrations per hour per IP (supports dorm/lab setups while preventing mass bot registrations).
+3. **OTP Verification (`POST /api/v1/auth/verify`)**:
+   - Verification cycle: Maximum 5 OTP attempts allowed per code. On the 5th failed attempt, the verification code is permanently invalidated (`used_at` set in database), returning `MAX_ATTEMPTS_EXCEEDED`.
+   - Endpoint rate limits: 25 attempts/15 min per IP, 10 attempts/15 min per email.
+   - OTP values are never logged and never returned in production responses.
+4. **OTP Resend (`POST /api/v1/auth/resend-verification`)**:
+   - 60-second cooldown per email/account.
+   - Max 5 resends per hour per email.
+5. **Token Refresh (`POST /api/v1/auth/refresh`)**:
+   - 30 requests/minute per IP, ensuring smooth client token refreshes without disruption.
+6. **Standard Error Response**:
+   When rate limited, returns HTTP 429 with `Retry-After: <seconds>` header:
+   ```json
+   {
+     "error": {
+       "code": "RATE_LIMITED",
+       "message": "Too many requests. Please try again later."
+     }
+   }
+   ```
+
+### Proxy-Aware Client IP Extraction
+To prevent header spoofing from untrusted public clients, FastAPI's `get_client_ip` validates that the direct client connection is from a trusted proxy subnet (e.g. `127.0.0.1`, `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, configurable via `TRUSTED_PROXIES`) before inspecting `X-Forwarded-For` or `X-Real-IP`.
+
+---
+
+## 20. Production Configuration & Secrets Enforcement
+
+To prevent security vulnerabilities:
+- **JWT Secret Key:** `JWT_SECRET_KEY` must be at least 32 characters in production. If set to default or insecure values when `APP_ENV=production`, the application raises a `RuntimeError` and terminates startup immediately.
+- **Debug Mode:** `DEBUG=True` is strictly disallowed in production mode.
+- **No Committed Secrets:** Credentials, private keys, and secrets are passed exclusively via environment variables.

@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse
 from app.api.v1.router import router as api_v1_router
 from app.core.config import settings
 from app.core.errors import AppException
+from app.core.proxy import get_client_ip
 
 logging.basicConfig(
     level=logging.DEBUG if settings.DEBUG else logging.INFO,
@@ -45,7 +46,7 @@ def create_app() -> FastAPI:
         request.state.request_id = request_id
 
         start_time = time.perf_counter()
-        client_ip = request.client.host if request.client else "unknown"
+        client_ip = get_client_ip(request)
 
         try:
             response = await call_next(request)
@@ -102,6 +103,9 @@ def create_app() -> FastAPI:
     @application.exception_handler(AppException)
     async def app_exception_handler(request: Request, exc: AppException) -> JSONResponse:
         request_id = getattr(request.state, "request_id", str(uuid.uuid4()))
+        headers = {"X-Request-ID": request_id}
+        if exc.headers:
+            headers.update(exc.headers)
         return JSONResponse(
             status_code=exc.status_code,
             content={
@@ -110,7 +114,7 @@ def create_app() -> FastAPI:
                     "message": exc.message,
                 }
             },
-            headers={"X-Request-ID": request_id},
+            headers=headers,
         )
 
     @application.exception_handler(HTTPException)
