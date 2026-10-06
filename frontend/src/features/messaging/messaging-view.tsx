@@ -9,8 +9,10 @@ import {
   Check,
   CheckCheck,
   ExternalLink,
+  Lock,
   MessageSquare,
   Send,
+  Sparkles,
   XCircle,
 } from "lucide-react";
 
@@ -22,10 +24,10 @@ import type {
   Message,
   User,
 } from "@/lib/api/types";
-import { Avatar, Badge, Button, Skeleton } from "@/components/ui";
+import { Avatar, Button, Skeleton } from "@/components/ui";
 import { SiteFooter, SiteHeader } from "@/components/marketplace/site-header";
 import { relativeTime } from "@/features/marketplace/presentation";
-import { isSafeHttpUrl } from "@/lib/security/url";
+import "./messaging.css";
 
 function MessageBubble({
   message,
@@ -35,49 +37,20 @@ function MessageBubble({
   isMine: boolean;
 }) {
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: isMine ? "flex-end" : "flex-start",
-        marginBottom: "12px",
-      }}
-    >
-      <div
-        style={{
-          maxWidth: "80%",
-          padding: "10px 14px",
-          borderRadius: "16px",
-          borderTopRightRadius: isMine ? "4px" : "16px",
-          borderTopLeftRadius: !isMine ? "4px" : "16px",
-          background: isMine ? "var(--foreground)" : "var(--card)",
-          color: isMine ? "var(--card)" : "var(--foreground)",
-          border: isMine ? "none" : "1px solid var(--border)",
-          fontSize: "14px",
-          lineHeight: 1.5,
-          wordBreak: "break-word",
-          whiteSpace: "pre-wrap",
-          boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
-        }}
-      >
+    <div className={`chat-bubble-row ${isMine ? "is-mine" : "is-theirs"}`}>
+      <div className={`chat-bubble ${isMine ? "is-mine" : "is-theirs"}`}>
         {message.content}
       </div>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "4px",
-          fontSize: "11px",
-          color: "var(--muted-foreground)",
-          marginTop: "4px",
-          paddingInline: "4px",
-        }}
-      >
+      <div className="chat-bubble-meta">
         <span>{relativeTime(message.created_at)}</span>
         {isMine && (
-          <span>
+          <span className="chat-receipt-icon">
             {message.read_at ? (
-              <CheckCheck size={13} style={{ color: "var(--accent-orange)" }} aria-label="Read" />
+              <CheckCheck
+                size={13}
+                className="chat-receipt-read"
+                aria-label="Read"
+              />
             ) : (
               <Check size={13} aria-label="Sent" />
             )}
@@ -179,7 +152,7 @@ function ActiveThread({
     return (
       <div style={{ padding: "32px", display: "flex", flexDirection: "column", gap: "16px" }}>
         <Skeleton />
-        <Skeleton shape="image" />
+        <Skeleton />
         <Skeleton />
       </div>
     );
@@ -199,188 +172,106 @@ function ActiveThread({
   if (!conversation) return null;
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
-        background: "var(--card)",
-      }}
-    >
-      {/* Header bar */}
-      <div
-        style={{
-          padding: "14px 20px",
-          borderBottom: "1px solid var(--border)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: "12px",
-          background: "var(--card)",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0 }}>
+    <div className="messenger-thread">
+      {/* Thread Header */}
+      <div className="messenger-thread-header">
+        <div className="messenger-user-meta">
           <button
             type="button"
             className="md:hidden text-action"
-            style={{ padding: "4px", marginInlineEnd: "4px" }}
+            style={{ padding: "6px", marginInlineEnd: "2px", display: "inline-flex", alignItems: "center" }}
             onClick={() => router.push("/messages")}
-            aria-label="Back to messages"
+            aria-label="Back to messages list"
           >
-            <ArrowLeft size={19} />
+            <ArrowLeft size={20} />
           </button>
           <Avatar name={conversation.other_participant.name} size="md" />
           <div style={{ minWidth: 0 }}>
-            <h2
-              style={{
-                fontSize: "15px",
-                fontWeight: 700,
-                margin: 0,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-            >
+            <h2 className="messenger-user-name">
               {conversation.other_participant.name}
             </h2>
-            <span style={{ fontSize: "12px", color: "var(--muted-foreground)" }}>
-              Ramaiah student
+            <span className="messenger-user-badge">
+              <span className="messenger-user-badge-dot" />
+              Verified Ramaiah Student
             </span>
           </div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <div>
           {!isClosed && (
             <Button
               variant="secondary"
               size="sm"
               disabled={closeMutation.isPending}
               onClick={() => {
-                if (confirm("Close this conversation? Neither participant will be able to send new messages.")) {
+                if (
+                  confirm(
+                    "Close this conversation? Neither participant will be able to send new messages."
+                  )
+                ) {
                   closeMutation.mutate();
                 }
               }}
             >
-              <XCircle size={14} /> Close
+              <XCircle size={14} /> Close enquiry
             </Button>
           )}
         </div>
       </div>
 
-      {/* Listing Context Banner */}
-      <div
-        style={{
-          padding: "12px 20px",
-          background: "var(--background)",
-          borderBottom: "1px solid var(--border)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: "14px",
-          flexWrap: "wrap",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0 }}>
-          {conversation.post_image_url && isSafeHttpUrl(conversation.post_image_url) ? (
-            /* Listing image URLs are supplied by API storage */
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={conversation.post_image_url}
-              alt={conversation.post_title || "Marketplace listing photo"}
-              style={{
-                width: "44px",
-                height: "44px",
-                borderRadius: "6px",
-                objectFit: "cover",
-                border: "1px solid var(--border)",
-              }}
-            />
-          ) : (
-            <div
-              style={{
-                width: "44px",
-                height: "44px",
-                borderRadius: "6px",
-                background: "var(--surface-muted)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "var(--muted-foreground)",
-                fontSize: "10px",
-                fontWeight: 600,
-              }}
-            >
-              No image
-            </div>
-          )}
-          <div style={{ minWidth: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              <Badge tone={conversation.post_type === "OFFER" ? "offer" : "request"}>
-                {conversation.post_type}
-              </Badge>
-              <span
-                style={{
-                  fontSize: "14px",
-                  fontWeight: 600,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {conversation.post_title}
-              </span>
-            </div>
-            {conversation.post?.price && (
-              <span style={{ fontSize: "12px", color: "var(--muted-foreground)" }}>
+      {/* Listing Context Banner (Clean Typography & Link — No Broken Image) */}
+      <div className="messenger-listing-banner">
+        <div className="messenger-listing-info">
+          <span
+            className={`messenger-listing-tag ${
+              conversation.post_type === "OFFER" ? "offer" : "request"
+            }`}
+          >
+            {conversation.post_type === "OFFER" ? "Offering" : "Request"}
+          </span>
+          <span className="messenger-listing-title">
+            {conversation.post_title}
+          </span>
+          {conversation.post?.price !== undefined &&
+            conversation.post?.price !== null && (
+              <span className="messenger-listing-price">
                 ₹{conversation.post.price} {conversation.post.price_unit ?? ""}
               </span>
             )}
-          </div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          {/* If post has WhatsApp enabled and author provided link */}
-          {conversation.post_type === "OFFER" && (
-            <Link
-              href={`/?post=${conversation.post_id}`}
-              className="text-action"
-              style={{ fontSize: "12px", display: "inline-flex", alignItems: "center", gap: "4px" }}
-            >
-              View listing <ExternalLink size={12} />
-            </Link>
-          )}
-        </div>
+        <Link
+          href={`/?post=${conversation.post_id}`}
+          className="messenger-listing-action"
+          target="_blank"
+        >
+          View listing <ExternalLink size={12} />
+        </Link>
       </div>
 
-      {/* Messages Scroll Area */}
-      <div
-        style={{
-          flex: 1,
-          overflowY: "auto",
-          padding: "20px",
-          background: "var(--background)",
-        }}
-      >
+      {/* Messages Stream */}
+      <div className="messenger-stream">
         {messagesQuery.isPending ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            <Skeleton />
             <Skeleton />
             <Skeleton />
           </div>
         ) : messages.length === 0 ? (
-          <div
-            style={{
-              textAlign: "center",
-              padding: "40px 20px",
-              color: "var(--muted-foreground)",
-            }}
-          >
-            <MessageSquare size={32} style={{ margin: "0 auto 12px", opacity: 0.4 }} />
-            <p style={{ fontSize: "14px", fontWeight: 500, margin: 0 }}>
-              No messages yet in this enquiry.
+          <div className="messenger-stream-empty">
+            <div className="messenger-empty-icon-wrap">
+              <Sparkles size={24} />
+            </div>
+            <strong style={{ fontSize: "15px", color: "#1c1813" }}>
+              Start the conversation
+            </strong>
+            <p style={{ fontSize: "13px", margin: 0, lineHeight: 1.5 }}>
+              Ask about availability, arrange a convenient spot on the MSRIT
+              campus, or discuss item details.
             </p>
-            <p style={{ fontSize: "12px", marginTop: "4px" }}>
-              Say hello or ask if the item is still available.
-            </p>
+            <div className="messenger-icebreaker-box">
+              💬 <em>&ldquo;Hi {conversation.other_participant.name}, is this still available? Can we meet near the campus library?&rdquo;</em>
+            </div>
           </div>
         ) : (
           messages.map((m) => (
@@ -396,84 +287,51 @@ function ActiveThread({
 
       {/* Closed State Banner */}
       {isClosed && (
-        <div
-          role="status"
-          style={{
-            padding: "12px 20px",
-            background: "var(--surface-muted)",
-            borderTop: "1px solid var(--border)",
-            fontSize: "13px",
-            color: "var(--muted-foreground)",
-            textAlign: "center",
-          }}
-        >
-          This conversation is closed. Further messages cannot be sent.
+        <div className="messenger-closed-banner" role="status">
+          <Lock size={15} />
+          <span>This conversation has been closed. Messages are now read-only.</span>
         </div>
       )}
 
-      {/* Composer */}
+      {/* Message Composer */}
       {!isClosed && (
-        <form
-          onSubmit={handleSend}
-          style={{
-            padding: "14px 20px",
-            background: "var(--card)",
-            borderTop: "1px solid var(--border)",
-            display: "flex",
-            alignItems: "flex-end",
-            gap: "10px",
-          }}
-        >
-          <div style={{ flex: 1, position: "relative" }}>
+        <form onSubmit={handleSend} className="messenger-composer">
+          <div className="messenger-composer-input-wrap">
             <textarea
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Type a message… (Enter to send, Shift+Enter for new line)"
+              placeholder="Write a message… (Press Enter to send, Shift + Enter for new line)"
               rows={2}
               maxLength={2000}
-              className="rm-input messaging-chat-input"
-              style={{
-                width: "100%",
-                padding: "10px 12px",
-                fontSize: "14px",
-                resize: "none",
-                fontFamily: "inherit",
-              }}
+              className="messenger-textarea"
             />
             {inputText.length > 1800 && (
-              <span
-                style={{
-                  position: "absolute",
-                  bottom: "6px",
-                  right: "8px",
-                  fontSize: "10px",
-                  color: "var(--muted-foreground)",
-                }}
-              >
-                {2000 - inputText.length}
+              <span className="messenger-char-count">
+                {2000 - inputText.length} left
               </span>
             )}
           </div>
-          <Button
-            variant="accent"
+          <button
             type="submit"
+            className="messenger-send-btn"
             disabled={!inputText.trim() || sendMutation.isPending}
-            style={{ height: "42px", paddingInline: "16px" }}
+            aria-label="Send message"
           >
-            <Send size={16} />
-            <span className="sr-only">Send</span>
-          </Button>
+            <Send size={18} />
+          </button>
         </form>
       )}
+
       {sendMutation.isError && (
         <div
           role="alert"
           style={{
-            padding: "6px 20px",
+            padding: "8px 20px",
             background: "var(--destructive-soft)",
             color: "var(--destructive)",
             fontSize: "12px",
+            borderTop: "1px solid rgba(167, 47, 43, 0.2)",
           }}
         >
           {errorMessage(sendMutation.error)}
@@ -502,87 +360,52 @@ export function MessagingView({ activeId }: { activeId?: string }) {
           <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "var(--background)" }}>
             <SiteHeader />
 
-            <main
-              id="main"
-              className="rm-container"
-              style={{
-                flex: 1,
-                paddingBlock: "24px",
-                display: "flex",
-                flexDirection: "column",
-              }}
-            >
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: activeId
-                    ? "minmax(280px, 340px) 1fr"
-                    : "minmax(280px, 340px) 1fr",
-                  borderRadius: "12px",
-                  border: "1px solid var(--border)",
-                  overflow: "hidden",
-                  minHeight: "72vh",
-                  background: "var(--card)",
-                }}
-                className="messaging-grid"
-              >
+            <main id="main" className="rm-container messenger-wrapper">
+              <div className="messenger-card">
                 {/* Left panel: Conversation List */}
                 <aside
-                  style={{
-                    borderRight: "1px solid var(--border)",
-                    display: activeId ? "none" : "flex",
-                    flexDirection: "column",
-                    background: "var(--card)",
-                  }}
-                  className={`conversations-sidebar ${!activeId ? "block-always" : "md:flex"}`}
+                  className={`messenger-sidebar ${
+                    activeId ? "is-hidden-mobile" : ""
+                  }`}
                 >
-                  <div
-                    style={{
-                      padding: "16px 20px",
-                      borderBottom: "1px solid var(--border)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                    }}
-                  >
+                  <div className="messenger-sidebar-header">
                     <div>
-                      <h1 style={{ fontSize: "18px", fontWeight: 700, margin: 0 }}>
-                        Messages
-                      </h1>
-                      <span style={{ fontSize: "12px", color: "var(--muted-foreground)" }}>
-                        Campus enquiries
+                      <h1 className="messenger-sidebar-title">Messages</h1>
+                      <span className="messenger-sidebar-subtitle">
+                        Campus enquiries &amp; trades
                       </span>
                     </div>
+                    {conversations.length > 0 && (
+                      <span className="messenger-badge-total">
+                        {conversations.length} {conversations.length === 1 ? "thread" : "threads"}
+                      </span>
+                    )}
                   </div>
 
-                  <div style={{ flex: 1, overflowY: "auto" }}>
+                  <div className="messenger-list-scroll">
                     {convListQuery.isPending ? (
-                      <div style={{ padding: "16px", display: "flex", flexDirection: "column", gap: "12px" }}>
+                      <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "12px" }}>
                         <Skeleton />
                         <Skeleton />
                         <Skeleton />
                       </div>
                     ) : conversations.length === 0 ? (
-                      <div
-                        style={{
-                          padding: "48px 24px",
-                          textAlign: "center",
-                          color: "var(--muted-foreground)",
-                        }}
-                      >
-                        <MessageSquare size={32} style={{ margin: "0 auto 12px", opacity: 0.3 }} />
-                        <p style={{ fontSize: "14px", fontWeight: 600, margin: 0 }}>
-                          No messages yet
-                        </p>
-                        <p style={{ fontSize: "12px", marginTop: "6px" }}>
-                          When you message a seller or request an item, your conversations will show up here.
+                      <div className="messenger-sidebar-empty">
+                        <div className="messenger-empty-icon-wrap">
+                          <MessageSquare size={26} />
+                        </div>
+                        <strong style={{ fontSize: "14.5px", color: "#1c1813" }}>
+                          No conversations yet
+                        </strong>
+                        <p style={{ fontSize: "12.5px", margin: 0, lineHeight: 1.5 }}>
+                          Reach out to a fellow student on any marketplace listing to begin an enquiry.
                         </p>
                         <Link
                           href="/#recent"
                           className="rm-button rm-button--secondary rm-button--sm"
-                          style={{ marginTop: "16px", display: "inline-block" }}
+                          style={{ marginTop: "12px" }}
                         >
-                          Browse listings
+                          Explore campus listings
                         </Link>
                       </div>
                     ) : (
@@ -593,90 +416,33 @@ export function MessagingView({ activeId }: { activeId?: string }) {
                             key={conv.id}
                             type="button"
                             onClick={() => router.push(`/messages/${conv.id}`)}
-                            style={{
-                              width: "100%",
-                              padding: "14px 18px",
-                              borderBottom: "1px solid var(--border)",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "12px",
-                              textAlign: "left",
-                              background: isSelected
-                                ? "var(--accent-soft-orange)"
-                                : "transparent",
-                              cursor: "pointer",
-                              borderInline: "none",
-                              borderTop: "none",
-                              transition: "background 120ms ease",
-                            }}
+                            className={`messenger-list-item ${
+                              isSelected ? "is-active" : ""
+                            }`}
                           >
-                            <Avatar name={conv.other_participant.name} size="md" />
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div
-                                style={{
-                                  display: "flex",
-                                  justifyContent: "space-between",
-                                  alignItems: "baseline",
-                                }}
-                              >
-                                <strong
-                                  style={{
-                                    fontSize: "14px",
-                                    color: "var(--foreground)",
-                                    overflow: "hidden",
-                                    textOverflow: "ellipsis",
-                                    whiteSpace: "nowrap",
-                                  }}
-                                >
+                            <div className="messenger-item-avatar-wrap">
+                              <Avatar name={conv.other_participant.name} size="md" />
+                            </div>
+                            <div className="messenger-item-content">
+                              <div className="messenger-item-top">
+                                <strong className="messenger-item-name">
                                   {conv.other_participant.name}
                                 </strong>
-                                <span
-                                  style={{
-                                    fontSize: "11px",
-                                    color: "var(--muted-foreground)",
-                                    flexShrink: 0,
-                                  }}
-                                >
+                                <span className="messenger-item-time">
                                   {relativeTime(conv.last_message_at || conv.created_at)}
                                 </span>
                               </div>
-                              <div
-                                style={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: "6px",
-                                  marginTop: "3px",
-                                }}
-                              >
-                                <span
-                                  style={{
-                                    fontSize: "12px",
-                                    color: "var(--muted-foreground)",
-                                    overflow: "hidden",
-                                    textOverflow: "ellipsis",
-                                    whiteSpace: "nowrap",
-                                  }}
-                                >
-                                  {conv.post_title}
+                              <div className="messenger-item-sub">
+                                <span className="messenger-item-post-title">
+                                  📌 {conv.post_title}
                                 </span>
+                                {conv.unread_count > 0 && (
+                                  <span className="messenger-item-unread">
+                                    {conv.unread_count}
+                                  </span>
+                                )}
                               </div>
                             </div>
-                            {conv.unread_count > 0 && (
-                              <span
-                                style={{
-                                  background: "var(--accent-orange)",
-                                  color: "#ffffff",
-                                  fontSize: "11px",
-                                  fontWeight: 700,
-                                  borderRadius: "999px",
-                                  padding: "2px 6px",
-                                  minWidth: "18px",
-                                  textAlign: "center",
-                                }}
-                              >
-                                {conv.unread_count}
-                              </span>
-                            )}
                           </button>
                         );
                       })
@@ -686,34 +452,24 @@ export function MessagingView({ activeId }: { activeId?: string }) {
 
                 {/* Right panel: Active Thread or Empty Selection */}
                 <section
-                  style={{
-                    display: !activeId ? "none" : "flex",
-                    flexDirection: "column",
-                    height: "100%",
-                  }}
-                  className={`thread-container ${activeId ? "block-always" : "md:flex"}`}
+                  className={`messenger-thread ${
+                    !activeId ? "is-hidden-mobile" : ""
+                  }`}
                 >
                   {activeId ? (
-                    <ActiveThread conversationId={activeId} currentUser={currentUser} />
+                    <ActiveThread
+                      conversationId={activeId}
+                      currentUser={currentUser}
+                    />
                   ) : (
-                    <div
-                      style={{
-                        flex: 1,
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        padding: "32px",
-                        textAlign: "center",
-                        color: "var(--muted-foreground)",
-                      }}
-                    >
-                      <MessageSquare size={40} style={{ opacity: 0.3, marginBottom: "16px" }} />
-                      <h2 style={{ fontSize: "16px", fontWeight: 600, color: "var(--foreground)", margin: 0 }}>
-                        Select a conversation
-                      </h2>
-                      <p style={{ fontSize: "13px", marginTop: "6px", maxWidth: "36ch" }}>
-                        Choose an enquiry from the left to read messages and chat with campus students.
+                    <div className="messenger-empty-selection">
+                      <div className="messenger-empty-selection-icon">
+                        <MessageSquare size={34} />
+                      </div>
+                      <h2>Select an enquiry</h2>
+                      <p>
+                        Choose a conversation from the left to read messages and
+                        coordinate with verified students on campus.
                       </p>
                     </div>
                   )}
