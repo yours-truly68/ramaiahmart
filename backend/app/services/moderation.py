@@ -421,13 +421,25 @@ class OpenAICompatibleVisionProvider:
             "Content-Type": "application/json",
         }
 
-        # Format image content
+        # Format image content - multimodal model requires valid HTTP/HTTPS URL
         image_content: dict[str, Any]
-        if isinstance(image_url_or_bytes, str) and image_url_or_bytes.startswith("http"):
+        if isinstance(image_url_or_bytes, str) and (
+            image_url_or_bytes.startswith("http://") or image_url_or_bytes.startswith("https://")
+        ):
             image_content = {"type": "image_url", "image_url": {"url": image_url_or_bytes}}
+        elif isinstance(image_url_or_bytes, bytes):
+            import base64
+
+            b64_img = base64.b64encode(image_url_or_bytes).decode("utf-8")
+            image_content = {
+                "type": "image_url",
+                "image_url": {"url": f"data:image/jpeg;base64,{b64_img}"},
+            }
         else:
-            # Fallback text representation if raw key
-            image_content = {"type": "text", "text": f"Image identifier: {image_url_or_bytes}"}
+            raise ValueError(
+                "Vision provider requires a valid HTTP/HTTPS image URL, "
+                f"received: {image_url_or_bytes}"
+            )
 
         body: dict[str, Any] = {
             "model": self.model,
@@ -557,6 +569,7 @@ class ModerationService:
         text_provider: TextModerationProvider | None = None,
         vision_provider: VisionModerationProvider | None = None,
         provider: ModerationProvider | None = None,
+        storage_service: Any = None,
     ) -> None:
         if provider is not None:
             self.text_provider: Any = provider
@@ -566,6 +579,7 @@ class ModerationService:
             self.text_provider = text_provider or get_configured_text_provider()
             self.vision_provider = vision_provider or get_configured_vision_provider()
             self.provider = self.text_provider
+        self.storage_service = storage_service
 
     def review_text(
         self,
@@ -761,14 +775,25 @@ class ModerationService:
                 model=recent_mod.model or "cached_v1",
             )
 
-        # Select primary image key or URL
+        # Select primary image
         primary_image = post.images[0]
-        image_ref = primary_image.public_url or primary_image.storage_key
+
+        # Generate temporary presigned GET URL for vision evaluation of private S3 image
+        storage = self.storage_service
+        if storage is None:
+            from app.services.storage import storage_service as default_storage_service
+
+            storage = default_storage_service
+
+        image_url = storage.generate_download_url(
+            primary_image.storage_key,
+            expires_in=settings.STORAGE_PRESIGNED_EXPIRATION_SECONDS,
+        )
 
         try:
             if hasattr(self.vision_provider, "review_image"):
                 evaluation = self.vision_provider.review_image(
-                    image_url_or_bytes=image_ref,
+                    image_url_or_bytes=image_url,
                     post_title=post.title,
                     post_description=post.description,
                     reason=report.reason.value,

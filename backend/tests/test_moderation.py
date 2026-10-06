@@ -479,3 +479,154 @@ def test_openai_compatible_provider_malformed_response_fails_closed(monkeypatch)
     assert res.decision == ModerationDecision.REVIEW
     assert "PROVIDER_FAILURE_FALLBACK" in res.reason_codes
     assert res.risk_score == 1.0
+
+
+def test_evaluate_report_image_converts_private_s3_key_to_presigned_url(moderation_setup):
+    """Test private S3 image is converted to a presigned HTTPS URL before vision evaluation."""
+    from unittest.mock import MagicMock
+
+    from app.core.config import settings
+    from app.models.post import PostImage
+    from app.models.report import Report, ReportReason
+    from app.services.moderation import ModerationEvaluation, ModerationService
+
+    db = SessionLocal()
+    try:
+        post = Post(
+            author_id=moderation_setup["user"].id,
+            category_id=moderation_setup["category"].id,
+            type=PostType.OFFER,
+            title="Physics Textbook",
+            description="University physics volume 1.",
+            price=Decimal("350.00"),
+            status=PostStatus.PUBLISHED,
+        )
+        db.add(post)
+        db.flush()
+
+        # Image in private S3 bucket: has storage_key, no public_url
+        img = PostImage(
+            post_id=post.id,
+            storage_key="posts/abc/private_photo.jpg",
+            public_url=None,
+            position=0,
+        )
+        db.add(img)
+
+        report = Report(
+            post_id=post.id,
+            reporter_id=moderation_setup["user"].id,
+            reason=ReportReason.EXPLICIT_IMAGE,
+            description="Suspected explicit image.",
+        )
+        db.add(report)
+        db.commit()
+        db.refresh(post)
+        db.refresh(report)
+
+        # Mock StorageService generating presigned URL
+        presigned_url = (
+            "https://s3.ap-south-1.amazonaws.com/ramaiahmart-media/"
+            "posts/abc/private_photo.jpg?X-Amz-Signature=mock123"
+        )
+        mock_storage = MagicMock()
+        mock_storage.generate_download_url.return_value = presigned_url
+
+        # Mock VisionProvider
+        mock_vision = MagicMock()
+        mock_vision.review_image.return_value = ModerationEvaluation(
+            decision=ModerationDecision.APPROVE,
+            risk_score=0.04,
+            reason_codes=["SAFE_IMAGE"],
+            provider="mock_vision",
+            model="vision_v1",
+        )
+
+        service = ModerationService(vision_provider=mock_vision, storage_service=mock_storage)
+        eval_result = service.evaluate_report_image(report, post, db)
+
+        # 1. Verify StorageService generated presigned GET URL for private image key
+        mock_storage.generate_download_url.assert_called_once_with(
+            "posts/abc/private_photo.jpg",
+            expires_in=settings.STORAGE_PRESIGNED_EXPIRATION_SECONDS,
+        )
+
+        # 2. Verify VisionProvider received the presigned HTTPS URL, NOT raw storage_key
+        mock_vision.review_image.assert_called_once()
+        call_kwargs = mock_vision.review_image.call_args.kwargs
+        assert call_kwargs["image_url_or_bytes"] == presigned_url
+        assert call_kwargs["image_url_or_bytes"] != "posts/abc/private_photo.jpg"
+        assert eval_result.decision == ModerationDecision.APPROVE
+    finally:
+        db.close()
+
+
+def test_openai_compatible_vision_provider_sends_image_url_and_rejects_raw_key(monkeypatch):
+    """Test vision provider formats image_url for multimodal model and rejects raw storage_key."""
+    import json
+    from unittest.mock import MagicMock
+
+    from app.services.moderation import OpenAICompatibleVisionProvider
+
+    captured_requests: list[dict] = []
+    mock_resp = MagicMock()
+    mock_resp.json.return_value = {
+        "choices": [
+            {
+                "message": {
+                    "content": json.dumps(
+                        {"decision": "ALLOW", "risk_score": 0.02, "reason_codes": ["SAFE"]}
+                    )
+                }
+            }
+        ]
+    }
+    mock_resp.raise_for_status = MagicMock()
+
+    class MockClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            pass
+
+        def post(self, url, headers=None, json=None):
+            captured_requests.append(json)
+            return mock_resp
+
+    monkeypatch.setattr("httpx.Client", MockClient)
+
+    vision_provider = OpenAICompatibleVisionProvider(
+        api_key="test-key", model="gpt-4o-mini", base_url="https://gateway.ai.cloudflare.com/v1"
+    )
+
+    # 1. Presigned HTTPS URL formatted as {"type": "image_url", "image_url": {"url": ...}}
+    presigned_url = "https://s3.ap-south-1.amazonaws.com/bucket/posts/img.jpg?sig=abc"
+    vision_provider.review_image(
+        image_url_or_bytes=presigned_url,
+        post_title="Title",
+        post_description="Desc",
+        reason="EXPLICIT_IMAGE",
+    )
+
+    assert len(captured_requests) == 1
+    req_body = captured_requests[0]
+    user_content = req_body["messages"][1]["content"]
+    image_part = next(part for part in user_content if part.get("type") == "image_url")
+    assert image_part["image_url"]["url"] == presigned_url
+
+    # Must NOT have any text part with "Image identifier:"
+    text_parts = [part.get("text", "") for part in user_content if part.get("type") == "text"]
+    assert not any("Image identifier:" in t for t in text_parts)
+
+    # 2. Raw storage key is rejected rather than sent as image identifier
+    with pytest.raises(ValueError, match="Vision provider requires a valid HTTP/HTTPS image URL"):
+        vision_provider.review_image(
+            image_url_or_bytes="posts/abc/raw_storage_key.jpg",
+            post_title="Title",
+            post_description="Desc",
+            reason="EXPLICIT_IMAGE",
+        )
