@@ -482,22 +482,24 @@ def get_configured_text_provider() -> TextModerationProvider:
         return MockModerationProvider()
 
     if provider_name in ("openai", "groq"):
-        if not settings.AI_PROVIDER_API_KEY:
+        api_key = settings.AI_TEXT_API_KEY or settings.AI_PROVIDER_API_KEY
+        if not api_key:
             if settings.APP_ENV == "production":
                 raise ValueError(
-                    "AI_PROVIDER_API_KEY must be configured for production AI text provider"
+                    "AI_TEXT_API_KEY (or AI_PROVIDER_API_KEY) must be configured "
+                    "for production AI text provider"
                 )
             logger.warning(
-                "AI_PROVIDER_API_KEY not set in development; falling back to MockModerationProvider"
+                "AI text API key not set in development; falling back to MockModerationProvider"
             )
             return MockModerationProvider()
 
-        base_url = settings.AI_PROVIDER_BASE_URL
+        base_url = settings.AI_TEXT_BASE_URL or settings.AI_PROVIDER_BASE_URL
         if provider_name == "groq" and not base_url:
             base_url = "https://api.groq.com/openai/v1"
 
         return OpenAICompatibleTextProvider(
-            api_key=settings.AI_PROVIDER_API_KEY,
+            api_key=api_key,
             model=settings.AI_TEXT_MODEL,
             base_url=base_url,
             timeout=settings.AI_REQUEST_TIMEOUT_SECONDS,
@@ -517,22 +519,24 @@ def get_configured_vision_provider() -> VisionModerationProvider:
         return MockModerationProvider()
 
     if provider_name in ("openai", "groq"):
-        if not settings.AI_PROVIDER_API_KEY:
+        api_key = settings.AI_VISION_API_KEY or settings.AI_PROVIDER_API_KEY
+        if not api_key:
             if settings.APP_ENV == "production":
                 raise ValueError(
-                    "AI_PROVIDER_API_KEY must be configured for production AI vision provider"
+                    "AI_VISION_API_KEY (or AI_PROVIDER_API_KEY) must be configured "
+                    "for production AI vision provider"
                 )
             logger.warning(
-                "AI_PROVIDER_API_KEY not set in development; falling back to MockModerationProvider"
+                "AI vision API key not set in development; falling back to MockModerationProvider"
             )
             return MockModerationProvider()
 
-        base_url = settings.AI_PROVIDER_BASE_URL
+        base_url = settings.AI_VISION_BASE_URL or settings.AI_PROVIDER_BASE_URL
         if provider_name == "groq" and not base_url:
             base_url = "https://api.groq.com/openai/v1"
 
         return OpenAICompatibleVisionProvider(
-            api_key=settings.AI_PROVIDER_API_KEY,
+            api_key=api_key,
             model=settings.AI_VISION_MODEL,
             base_url=base_url,
             timeout=settings.AI_REQUEST_TIMEOUT_SECONDS,
