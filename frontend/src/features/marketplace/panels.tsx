@@ -1,17 +1,18 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Flag, MessageSquare, Pencil, Trash2, XCircle } from "lucide-react";
+import { Flag, MessageSquare, Pencil, PhoneCall, Trash2, XCircle } from "lucide-react";
 import { api, ApiError, errorMessage } from "@/lib/api/client";
 import { useSession } from "@/lib/auth/session";
-import type { Post, ReportReason } from "@/lib/api/types";
+import type { Conversation, Post, ReportReason } from "@/lib/api/types";
 import { Badge, Button, Skeleton, StatusBadge } from "@/components/ui";
 import { Dialog } from "./dialog";
 import { ListingImage, priceLabel, relativeTime } from "./presentation";
 
 export function DetailPanel({ id, onClose }: { id: string; onClose: () => void }) {
-  const [messagingNotice, setMessagingNotice] = useState(false);
+  const router = useRouter();
   const [reportOpen, setReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState<ReportReason>("EXPLICIT_IMAGE");
   const [reportDescription, setReportDescription] = useState("");
@@ -21,6 +22,14 @@ export function DetailPanel({ id, onClose }: { id: string; onClose: () => void }
   const session = useSession();
   const client = useQueryClient();
   const query = useQuery({ queryKey: ["post", id], queryFn: ({ signal }) => api<Post>(`posts/${id}`, { signal }) });
+
+  const startConversation = useMutation({
+    mutationFn: () => api<Conversation>(`posts/${id}/conversations`, { method: "POST" }),
+    onSuccess: (conv) => {
+      onClose();
+      router.push(`/messages/${conv.id}`);
+    },
+  });
 
   const closePost = useMutation({
     mutationFn: () => api<Post>(`posts/${id}/close`, { method: "POST" }),
@@ -74,16 +83,44 @@ export function DetailPanel({ id, onClose }: { id: string; onClose: () => void }
         </div>
       ) : (
         <div style={{ marginTop: "20px", paddingTop: "16px", borderTop: "1px solid var(--border)" }}>
-          <Button variant="accent" style={{ width: "100%", justifyContent: "center" }} onClick={() => setMessagingNotice(true)}>
-            <MessageSquare size={17} /> Message {query.data.author.name.split(" ")[0]}
-          </Button>
-          {messagingNotice && (
-            <div className="panel-note" role="status" style={{ marginTop: "12px", padding: "12px", background: "var(--accent-soft-orange)", borderRadius: "8px", color: "var(--foreground)" }}>
-              <strong>Direct student messaging rollout:</strong>
-              <p style={{ margin: "4px 0 0", fontSize: "12px" }}>
-                In-app messaging between students will be unlocked in the upcoming release. Both you and {query.data.author.name} are verified Ramaiah students.
-              </p>
-            </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            <Button
+              variant="accent"
+              style={{ width: "100%", justifyContent: "center" }}
+              disabled={startConversation.isPending}
+              onClick={() => {
+                if (!session.data) {
+                  router.push(`/login?next=${encodeURIComponent("/messages")}`);
+                  return;
+                }
+                startConversation.mutate();
+              }}
+            >
+              <MessageSquare size={17} />
+              {startConversation.isPending
+                ? "Starting conversation…"
+                : query.data.type === "OFFER"
+                  ? "Message seller"
+                  : "Offer this item"}
+            </Button>
+
+            {query.data.whatsapp_url && (
+              <a
+                href={query.data.whatsapp_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rm-button rm-button--secondary rm-button--md"
+                style={{ width: "100%", justifyContent: "center", textDecoration: "none" }}
+              >
+                <PhoneCall size={16} /> Continue on WhatsApp
+              </a>
+            )}
+          </div>
+
+          {startConversation.isError && (
+            <p className="form-error" role="alert" style={{ marginTop: "8px" }}>
+              {errorMessage(startConversation.error)}
+            </p>
           )}
 
           <div style={{ marginTop: "12px", textAlign: "center" }}>

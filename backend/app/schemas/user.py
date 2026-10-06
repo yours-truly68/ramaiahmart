@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field, computed_field
+from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
 
 
 class UserResponse(BaseModel):
@@ -20,6 +20,8 @@ class UserResponse(BaseModel):
     inactive_at: datetime | None = None
     deletion_requested_at: datetime | None = None
     deletion_scheduled_at: datetime | None = None
+    whatsapp_number: str | None = None
+    whatsapp_enabled: bool = False
     created_at: datetime
     updated_at: datetime
 
@@ -43,6 +45,28 @@ class UserUpdateRequest(BaseModel):
     name: str | None = Field(default=None, min_length=2, max_length=255)
     bio: str | None = Field(default=None, max_length=500)
     profile_image_key: str | None = Field(default=None, max_length=512)
+    whatsapp_number: str | None = Field(default=None, max_length=32)
+    whatsapp_enabled: bool | None = None
+
+    @field_validator("whatsapp_number")
+    @classmethod
+    def validate_whatsapp_number(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        val = v.strip()
+        if not val:
+            return None
+        if not val.startswith("+"):
+            raise ValueError(
+                "Phone number must be in international format starting with '+'"
+                " (e.g. +91 98765 43210)."
+            )
+        import re
+
+        digits = re.sub(r"\D", "", val)
+        if not (7 <= len(digits) <= 15):
+            raise ValueError("Phone number must contain between 7 and 15 digits.")
+        return f"+{digits}"
 
 
 class UserPostStats(BaseModel):

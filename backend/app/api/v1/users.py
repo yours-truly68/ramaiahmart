@@ -55,6 +55,20 @@ def update_me(
         current_user.bio = data.bio.strip()
     if data.profile_image_key is not None:
         current_user.profile_image_key = data.profile_image_key.strip()
+    if "whatsapp_number" in data.model_fields_set:
+        current_user.whatsapp_number = data.whatsapp_number
+    if "whatsapp_enabled" in data.model_fields_set and data.whatsapp_enabled is not None:
+        if data.whatsapp_enabled:
+            effective_number = current_user.whatsapp_number
+            if not effective_number:
+                raise AppException(
+                    code="WHATSAPP_NUMBER_REQUIRED",
+                    message=(
+                        "A valid WhatsApp phone number is required to enable WhatsApp enquiries."
+                    ),
+                    status_code=400,
+                )
+        current_user.whatsapp_enabled = data.whatsapp_enabled
 
     record_user_activity(current_user, db, commit=False)
     db.commit()

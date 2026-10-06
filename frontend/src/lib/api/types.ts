@@ -10,6 +10,7 @@ export type Post = {
   status: "DRAFT" | "PENDING_REVIEW" | "PUBLISHED" | "REJECTED" | "ARCHIVED" | "SOLD" | "RENTED" | "CLOSED";
   title: string; description: string; price: string | null; price_unit: string | null;
   created_at: string; updated_at: string; published_at: string | null; images: PostImage[];
+  whatsapp_url?: string | null;
 };
 export type PostPage = { items: Post[]; total: number; page: number; page_size: number; pages: number };
 
@@ -23,6 +24,8 @@ export type User = {
   profile_image_key: string | null;
   profile_image_url: string | null;
   bio: string | null;
+  whatsapp_number?: string | null;
+  whatsapp_enabled?: boolean;
   status: AccountStatus;
   last_activity_at: string | null;
   last_login_at: string | null;
@@ -31,6 +34,53 @@ export type User = {
   deletion_scheduled_at: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type Participant = {
+  id: string;
+  name: string;
+  university_verified: boolean;
+  profile_image_key: string | null;
+  profile_image_url: string | null;
+};
+
+export type ConversationPostSummary = {
+  id: string;
+  title: string;
+  type: PostType;
+  status: "DRAFT" | "PENDING_REVIEW" | "PUBLISHED" | "REJECTED" | "ARCHIVED" | "SOLD" | "RENTED" | "CLOSED";
+  price: string | null;
+  price_unit: string | null;
+  thumbnail_url: string | null;
+};
+
+export type Conversation = {
+  id: string;
+  post_id: string;
+  post_title: string;
+  post_type: PostType;
+  post_image_url: string | null;
+  post?: ConversationPostSummary | null;
+  other_participant: Participant;
+  last_message_at: string | null;
+  closed_at: string | null;
+  unread_count: number;
+  created_at: string;
+};
+
+export type Message = {
+  id: string;
+  conversation_id: string;
+  sender_id: string;
+  content: string;
+  created_at: string;
+  read_at: string | null;
+};
+
+export type ConversationListResponse = {
+  items: Conversation[];
+  total: number;
+  unread_total: number;
 };
 
 export type DeletionRequestResponse = {

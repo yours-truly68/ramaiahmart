@@ -82,6 +82,7 @@ class PostResponse(BaseModel):
     updated_at: datetime
     published_at: datetime | None = None
     images: list["PostImageResponse"] = Field(default_factory=list)
+    whatsapp_url: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

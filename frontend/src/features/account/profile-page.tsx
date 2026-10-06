@@ -12,6 +12,7 @@ import {
   GraduationCap,
   Home,
   LogOut,
+  MessageSquare,
   Package,
   Pencil,
   Plus,
@@ -41,6 +42,8 @@ import { DetailPanel } from "@/features/marketplace/panels";
 function EditProfile({ user, close }: { user: User; close: () => void }) {
   const client = useQueryClient();
   const [validation, setValidation] = useState("");
+  const [whatsappEnabled, setWhatsappEnabled] = useState(user.whatsapp_enabled ?? false);
+  const [whatsappNumber, setWhatsappNumber] = useState(user.whatsapp_number ?? "");
   const save = useMutation({
     mutationFn: (body: object) =>
       api<User>("users/me", { method: "PATCH", body: JSON.stringify(body) }),
@@ -57,8 +60,17 @@ function EditProfile({ user, close }: { user: User; close: () => void }) {
       setValidation("Please enter at least two characters for your name.");
       return;
     }
+    if (whatsappEnabled && !whatsappNumber.trim()) {
+      setValidation("Please enter a valid WhatsApp phone number starting with + and country code.");
+      return;
+    }
     setValidation("");
-    save.mutate({ name, bio: String(data.get("bio")).trim() });
+    save.mutate({
+      name,
+      bio: String(data.get("bio")).trim(),
+      whatsapp_enabled: whatsappEnabled,
+      whatsapp_number: whatsappNumber.trim() || null,
+    });
   }
   return (
     <Dialog title="A little more you." onClose={close}>
@@ -88,6 +100,44 @@ function EditProfile({ user, close }: { user: User; close: () => void }) {
             Up to 500 characters. A little about you and what you’re into.
           </span>
         </label>
+
+        <div className="rm-field" style={{ marginTop: "16px", paddingTop: "16px", borderTop: "1px solid var(--border)" }}>
+          <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", fontWeight: 600 }}>
+            <input
+              type="checkbox"
+              name="whatsapp_enabled"
+              checked={whatsappEnabled}
+              onChange={(e) => setWhatsappEnabled(e.target.checked)}
+              style={{ width: "16px", height: "16px", accentColor: "var(--accent-orange)" }}
+            />
+            <span>WhatsApp enquiries</span>
+          </label>
+          <p className="rm-field-hint" style={{ marginTop: "4px", fontSize: "13px" }}>
+            Students can choose to continue an enquiry on WhatsApp. Your number is only used when you enable this.
+          </p>
+
+          {whatsappEnabled && (
+            <div style={{ marginTop: "12px" }}>
+              <label htmlFor="wa-number" className="rm-label">
+                WhatsApp phone number <span className="rm-required">(required)</span>
+              </label>
+              <input
+                id="wa-number"
+                type="tel"
+                className="rm-input"
+                name="whatsapp_number"
+                placeholder="+91 98765 43210"
+                value={whatsappNumber}
+                onChange={(e) => setWhatsappNumber(e.target.value)}
+                required={whatsappEnabled}
+              />
+              <span className="rm-field-hint">
+                Enter your full international number starting with + (e.g. +91 98765 43210).
+              </span>
+            </div>
+          )}
+        </div>
+
         {(validation || save.isError) && (
           <p className="form-error" role="alert">
             {validation || errorMessage(save.error)}
@@ -231,6 +281,10 @@ function Profile({ user }: { user: User }) {
         <Link href="/">
           <Home size={19} />
           Browse campus
+        </Link>
+        <Link href="/messages">
+          <MessageSquare size={19} />
+          Messages
         </Link>
         <a href="#my-posts" onClick={() => selectTab("OFFER")}>
           <Package size={19} />

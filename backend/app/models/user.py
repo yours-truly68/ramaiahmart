@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, DateTime, String, func
+from sqlalchemy import false as sa_false
 from sqlalchemy import true as sa_true
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -56,6 +57,16 @@ class User(Base):
     profile_image_key: Mapped[str | None] = mapped_column(
         String(512),
         nullable=True,
+    )
+    whatsapp_number: Mapped[str | None] = mapped_column(
+        String(32),
+        nullable=True,
+    )
+    whatsapp_enabled: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        server_default=sa_false(),
+        nullable=False,
     )
     # V1: a valid @msrit.edu registration is sufficient for full access.
     # The column is retained for a future automated email-verification

@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from app.api.v1.auth import router as auth_router
 from app.api.v1.categories import router as categories_router
+from app.api.v1.conversations import router as conversations_router
 from app.api.v1.legal import router as legal_router
 from app.api.v1.media import router as media_router
 from app.api.v1.posts import router as posts_router
@@ -26,3 +27,4 @@ router.include_router(posts_router)
 router.include_router(media_router)
 router.include_router(legal_router)
 router.include_router(reports_router)
+router.include_router(conversations_router)

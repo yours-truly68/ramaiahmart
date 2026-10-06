@@ -47,3 +47,21 @@ svg { flex-shrink: 0; }
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
 }
+
+/* Messaging master-detail layout */
+@media (min-width: 768px) {
+  .messaging-grid {
+    grid-template-columns: 340px 1fr !important;
+  }
+  .conversations-sidebar {
+    display: flex !important;
+  }
+  .thread-container {
+    display: flex !important;
+  }
+}
+@media (max-width: 767px) {
+  .messaging-grid {
+    grid-template-columns: 1fr !important;
+  }
+}

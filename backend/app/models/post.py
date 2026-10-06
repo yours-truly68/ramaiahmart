@@ -133,6 +133,27 @@ class Post(Base):
 
     __table_args__ = (Index("ix_posts_status_created_at", "status", "created_at"),)
 
+    @property
+    def whatsapp_url(self) -> str | None:
+        """Construct safe wa.me link if author has enabled WhatsApp enquiries."""
+        try:
+            author = self.author
+        except Exception:
+            return None
+        if not author or not getattr(author, "whatsapp_enabled", False):
+            return None
+        raw_number = getattr(author, "whatsapp_number", None)
+        if not raw_number:
+            return None
+        import re
+        import urllib.parse
+
+        digits = re.sub(r"\D", "", raw_number)
+        if not digits or len(digits) < 7:
+            return None
+        msg = f"Hi, I found your RamaiahMart post: {self.title}. Is it still available?"
+        return f"https://wa.me/{digits}?text={urllib.parse.quote(msg)}"
+
 
 class PostImage(Base):
     """Image associated with a post."""

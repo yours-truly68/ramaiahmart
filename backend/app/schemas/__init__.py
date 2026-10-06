@@ -14,6 +14,16 @@ from app.schemas.category import (
     CategoryResponse,
     CategorySummary,
 )
+from app.schemas.conversation import (
+    ConversationListResponse,
+    ConversationPostSummary,
+    ConversationResponse,
+    MessageCreateRequest,
+    ParticipantSummary,
+)
+from app.schemas.conversation import (
+    MessageResponse as DirectMessageResponse,
+)
 from app.schemas.media import (
     CompleteUploadRequest,
     PostImageResponse,
@@ -35,9 +45,15 @@ __all__ = [
     "CategoryResponse",
     "CategorySummary",
     "CompleteUploadRequest",
+    "ConversationListResponse",
+    "ConversationPostSummary",
+    "ConversationResponse",
+    "DirectMessageResponse",
     "LoginRequest",
     "LogoutRequest",
+    "MessageCreateRequest",
     "MessageResponse",
+    "ParticipantSummary",
     "PostCreateRequest",
     "PostImageResponse",
     "PostListResponse",
