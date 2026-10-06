@@ -32,8 +32,8 @@ class Settings(BaseSettings):
     # Object Storage (MinIO locally / AWS S3 in production)
     S3_ENDPOINT_URL: str | None = None
     S3_PUBLIC_ENDPOINT_URL: str | None = None
-    AWS_ACCESS_KEY_ID: str = "minioadmin"
-    AWS_SECRET_ACCESS_KEY: str = "minioadmin"
+    AWS_ACCESS_KEY_ID: str | None = None
+    AWS_SECRET_ACCESS_KEY: str | None = None
     AWS_REGION: str = "us-east-1"
     S3_BUCKET_NAME: str = "ramaiahmart-media"
     STORAGE_PRESIGNED_EXPIRATION_SECONDS: int = 900
@@ -121,15 +121,11 @@ class Settings(BaseSettings):
                     "Cannot use default development postgres credentials or localhost."
                 )
 
-            # S3 / Object Storage check
+            # S3 / Object Storage check: reject default development credentials if explicitly supplied
             if self.AWS_ACCESS_KEY_ID == "minioadmin" or self.AWS_SECRET_ACCESS_KEY == "minioadmin":
                 raise ValueError(
-                    "Production configuration requires dedicated S3 credentials. "
+                    "Production configuration requires dedicated S3 credentials or EC2 IAM role. "
                     "Cannot use default development minioadmin credentials."
-                )
-            if not self.AWS_ACCESS_KEY_ID or not self.AWS_SECRET_ACCESS_KEY:
-                raise ValueError(
-                    "AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY must be configured in production."
                 )
 
             # CORS check

@@ -46,40 +46,70 @@ class StorageService:
         bucket_name: str | None = None,
         presigned_expiration: int | None = None,
     ) -> None:
-        self.endpoint_url = endpoint_url or settings.S3_ENDPOINT_URL
-        self.public_endpoint_url = (
-            public_endpoint_url or settings.S3_PUBLIC_ENDPOINT_URL or self.endpoint_url
+        raw_endpoint = endpoint_url if endpoint_url is not None else settings.S3_ENDPOINT_URL
+        self.endpoint_url = raw_endpoint.strip() if (raw_endpoint and raw_endpoint.strip()) else None
+
+        raw_public_endpoint = (
+            public_endpoint_url
+            if public_endpoint_url is not None
+            else settings.S3_PUBLIC_ENDPOINT_URL
         )
-        self.aws_access_key_id = aws_access_key_id or settings.AWS_ACCESS_KEY_ID
-        self.aws_secret_access_key = aws_secret_access_key or settings.AWS_SECRET_ACCESS_KEY
-        self.region_name = region_name or settings.AWS_REGION
+        if raw_public_endpoint and raw_public_endpoint.strip():
+            self.public_endpoint_url = raw_public_endpoint.strip()
+        else:
+            self.public_endpoint_url = self.endpoint_url
+
+        raw_access_key = (
+            aws_access_key_id
+            if aws_access_key_id is not None
+            else settings.AWS_ACCESS_KEY_ID
+        )
+        self.aws_access_key_id = (
+            raw_access_key.strip() if (raw_access_key and raw_access_key.strip()) else None
+        )
+
+        raw_secret_key = (
+            aws_secret_access_key
+            if aws_secret_access_key is not None
+            else settings.AWS_SECRET_ACCESS_KEY
+        )
+        self.aws_secret_access_key = (
+            raw_secret_key.strip() if (raw_secret_key and raw_secret_key.strip()) else None
+        )
+
+        raw_region = region_name if region_name is not None else settings.AWS_REGION
+        self.region_name = (
+            raw_region.strip() if (raw_region and raw_region.strip()) else None
+        )
+
         self.bucket_name = bucket_name or settings.S3_BUCKET_NAME
         self.presigned_expiration = (
             presigned_expiration or settings.STORAGE_PRESIGNED_EXPIRATION_SECONDS
         )
 
         # Internal client for backend operations (delete, head, create bucket)
-        self._client: Any = boto3.client(
-            "s3",
-            endpoint_url=self.endpoint_url,
-            aws_access_key_id=self.aws_access_key_id,
-            aws_secret_access_key=self.aws_secret_access_key,
-            region_name=self.region_name,
-            config=Config(signature_version="s3v4"),
-        )
+        self._client: Any = self._create_client(self.endpoint_url)
 
         # Public client for generating presigned URLs reachable by browsers
         if self.public_endpoint_url != self.endpoint_url:
-            self._public_client: Any = boto3.client(
-                "s3",
-                endpoint_url=self.public_endpoint_url,
-                aws_access_key_id=self.aws_access_key_id,
-                aws_secret_access_key=self.aws_secret_access_key,
-                region_name=self.region_name,
-                config=Config(signature_version="s3v4"),
-            )
+            self._public_client: Any = self._create_client(self.public_endpoint_url)
         else:
             self._public_client = self._client
+
+    def _create_client(self, endpoint_url: str | None) -> Any:
+        """Construct a boto3 S3 client with only the explicitly provided options."""
+        client_kwargs: dict[str, Any] = {
+            "config": Config(signature_version="s3v4"),
+        }
+        if endpoint_url:
+            client_kwargs["endpoint_url"] = endpoint_url
+        if self.region_name:
+            client_kwargs["region_name"] = self.region_name
+        if self.aws_access_key_id and self.aws_secret_access_key:
+            client_kwargs["aws_access_key_id"] = self.aws_access_key_id
+            client_kwargs["aws_secret_access_key"] = self.aws_secret_access_key
+
+        return boto3.client("s3", **client_kwargs)
 
     @property
     def client(self) -> Any:
@@ -187,7 +217,7 @@ class StorageService:
             self.client.head_bucket(Bucket=self.bucket_name)
         except ClientError:
             try:
-                if self.region_name == "us-east-1":
+                if not self.region_name or self.region_name == "us-east-1":
                     self.client.create_bucket(Bucket=self.bucket_name)
                 else:
                     self.client.create_bucket(
