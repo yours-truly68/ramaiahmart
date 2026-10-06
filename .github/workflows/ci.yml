@@ -65,6 +65,11 @@ jobs:
           DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/ramaiahmart
         run: uv run alembic upgrade head
 
+      - name: Validate Alembic schema drift
+        env:
+          DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/ramaiahmart
+        run: uv run alembic check
+
       - name: Run test suite (pytest)
         env:
           DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/ramaiahmart
@@ -105,6 +110,9 @@ jobs:
 
       - name: Typecheck frontend (TypeScript)
         run: pnpm run typecheck
+
+      - name: Run security & proxy tests
+        run: pnpm run test:security
 
       - name: Build Next.js production bundle
         env:
