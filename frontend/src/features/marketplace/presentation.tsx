@@ -41,6 +41,11 @@ export function ListingImage({ post, detail = false }: { post: Post; detail?: bo
       /* Listing URLs are supplied by the API, including arbitrary S3-compatible hosts. */
       // eslint-disable-next-line @next/next/no-img-element
       <img src={image.public_url!} alt={post.title} loading="lazy" onError={() => setFailed(true)} />
-      : <div className="photo-fallback"><Icon size={42} strokeWidth={1.25} aria-hidden="true" /><span>{post.type === "REQUEST" ? "Looking for this" : "No photo yet"}</span></div>}
+      : <div className="photo-fallback">
+          <div className="photo-fallback-icon">
+            <Icon size={28} strokeWidth={1.5} aria-hidden="true" />
+          </div>
+          <span className="photo-fallback-label">{post.type === "REQUEST" ? "Campus Request" : "No photo yet"}</span>
+        </div>}
   </div>;
 }
