@@ -432,13 +432,10 @@ function ActiveThread({
               placeholder="Type a message… (Enter to send, Shift+Enter for new line)"
               rows={2}
               maxLength={2000}
+              className="rm-input messaging-chat-input"
               style={{
                 width: "100%",
                 padding: "10px 12px",
-                borderRadius: "8px",
-                border: "1px solid var(--input-border)",
-                background: "var(--background)",
-                color: "var(--foreground)",
                 fontSize: "14px",
                 resize: "none",
                 fontFamily: "inherit",

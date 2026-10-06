@@ -17,10 +17,10 @@
 .hero-copy h1 { font-family: var(--font-display); font-weight: 900; letter-spacing: -3px; font-size: clamp(42px, 4.3vw, 67px); line-height: 1.04; margin-top: 21px; width: 112%; text-wrap: nowrap; }
 .hero-description { max-width: 470px; margin-top: 24px; font-size: 17px; line-height: 1.65; color: #53514c; }
 .hero-actions { display: flex; align-items: center; gap: 25px; margin-top: 26px; }
-.hero-search { background: var(--foreground); color: var(--card); border-radius: 7px; display: flex; align-items: center; gap: 13px; padding-inline: 18px 5px; width: min(355px, 100%); min-height: 55px; }
-.hero-search input { width: 100%; min-width: 0; border: 0; background: transparent; color: inherit; font-size: 12px; outline-offset: 3px; }
+.hero-search { background: var(--foreground); color: var(--card); border-radius: 7px; display: flex; align-items: center; gap: 13px; padding-inline: 18px 5px; width: min(355px, 100%); min-height: 55px; transition: box-shadow 0.18s ease; }
+.hero-search:focus-within { box-shadow: 0 0 0 3.5px rgba(230, 95, 43, 0.25); }
+.hero-search input { width: 100%; min-width: 0; border: 0 !important; background: transparent !important; box-shadow: none !important; color: inherit; font-size: 12px; outline: none !important; }
 .hero-search input::placeholder { color: #e0ded7; opacity: 1; }
-.hero-search input:focus-visible { outline-color: #ffbc8f; }
 .hero-search button { color: inherit; background: none; border: 0; min-width: 44px; min-height: 50px; display: grid; place-items: center; border-radius: 5px; }
 .browse-categories { font-size: 12px; font-weight: 700; display: flex; gap: 10px; align-items: center; text-decoration: none; white-space: nowrap; min-height: 44px; }
 .hero-footnote { font-size: 11px; color: var(--muted-foreground); display: flex; gap: 8px; align-items: center; margin-top: 23px; }
@@ -256,7 +256,25 @@
 .market-home .hero-copy h1 { width: 100%; font-size: clamp(38px, 4.2vw, 64px); letter-spacing: -.055em; margin-top: 16px; }
 .market-home .hero-description { margin-top: 18px; font-size: 16px; }
 .market-home .hero-actions { margin-top: 22px; flex-wrap: wrap; gap: 12px 24px; }
-.market-home .hero-search { width: min(380px, 100%); background: var(--card); color: var(--foreground); border: 1px solid var(--input-border); border-radius: 12px; }
+.market-home .hero-search {
+  width: min(380px, 100%);
+  background: #ffffff;
+  color: var(--foreground);
+  border: 1.5px solid #e0d8cb;
+  border-radius: 12px;
+  transition: border-color 0.18s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.market-home .hero-search:hover { border-color: #d0c5b3; }
+.market-home .hero-search:focus-within {
+  border-color: var(--accent-orange);
+  box-shadow: 0 0 0 3.5px rgba(230, 95, 43, 0.15);
+}
+.market-home .hero-search input {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
 .market-home .hero-search input::placeholder { color: var(--muted-foreground); }
 .market-home .hero-search button { background: var(--accent-orange); color: var(--foreground); min-height: 42px; border-radius: 8px; }
 .market-home .hero-photo { margin: 0; border-radius: 18px; min-height: 300px; }
