@@ -18,6 +18,21 @@ MIME_EXTENSION_MAP: dict[str, str] = {
 }
 
 
+def detect_image_format(data: bytes) -> str | None:
+    """Determine authentic image MIME type from raw magic bytes signature.
+
+    Returns:
+        Canonical MIME type ('image/jpeg', 'image/png', 'image/webp') or None if unrecognized.
+    """
+    if len(data) >= 3 and data[:3] == b"\xff\xd8\xff":
+        return "image/jpeg"
+    if len(data) >= 8 and data[:8] == b"\x89PNG\r\n\x1a\n":
+        return "image/png"
+    if len(data) >= 12 and data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return "image/webp"
+    return None
+
+
 class StorageService:
     """Storage service abstraction supporting both AWS S3 and MinIO."""
 
@@ -124,6 +139,35 @@ class StorageService:
                 return False
             logger.warning("Error checking object existence for %s: %s", storage_key, e)
             return False
+
+    def get_object_metadata(self, storage_key: str) -> dict[str, Any] | None:
+        """Retrieve object metadata via HEAD request."""
+        try:
+            res = self.client.head_object(Bucket=self.bucket_name, Key=storage_key)
+            return {
+                "content_length": int(res.get("ContentLength", 0)),
+                "content_type": str(res.get("ContentType", "")),
+            }
+        except ClientError as e:
+            error_code = e.response.get("Error", {}).get("Code", "")
+            if error_code in ("404", "NoSuchKey", "NotFound"):
+                return None
+            logger.warning("Error getting object metadata for %s: %s", storage_key, e)
+            return None
+
+    def get_object_header(self, storage_key: str, max_bytes: int = 512) -> bytes:
+        """Read first N bytes of an object via HTTP Range request without buffering full file."""
+        try:
+            res = self.client.get_object(
+                Bucket=self.bucket_name,
+                Key=storage_key,
+                Range=f"bytes=0-{max_bytes - 1}",
+            )
+            body: bytes = res["Body"].read(max_bytes)
+            return body
+        except ClientError as e:
+            logger.warning("Error reading object header for %s: %s", storage_key, e)
+            return b""
 
     def delete_object(self, storage_key: str) -> None:
         """Delete an object from storage. Safe if object is already missing."""
