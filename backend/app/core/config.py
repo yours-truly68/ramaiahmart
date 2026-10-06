@@ -121,7 +121,7 @@ class Settings(BaseSettings):
                     "Cannot use default development postgres credentials or localhost."
                 )
 
-            # S3 / Object Storage check: reject default development credentials if explicitly supplied
+            # S3 / Object Storage check: reject dev credentials if explicitly supplied
             if self.AWS_ACCESS_KEY_ID == "minioadmin" or self.AWS_SECRET_ACCESS_KEY == "minioadmin":
                 raise ValueError(
                     "Production configuration requires dedicated S3 credentials or EC2 IAM role. "

@@ -33,7 +33,7 @@ def test_storage_a_local_explicit_credentials():
 
 
 def test_storage_b_production_iam_role_mode():
-    """Test B: Production IAM role mode constructs client without supplying access keys or endpoint URL."""
+    """Test B: Production IAM mode constructs client without access keys or endpoint URL."""
     # Use real boto3 client creation via spy to verify construction succeeds without network calls
     with patch("app.services.storage.boto3.client", wraps=boto3.client) as spy_client:
         service = StorageService(
@@ -115,7 +115,7 @@ def test_storage_d_production_accepts_absent_credentials():
 
 
 def test_storage_empty_string_normalization():
-    """Empty strings for endpoint URL and credentials normalize to None so boto3 credential chain applies."""
+    """Empty strings normalize to None so boto3 credential chain applies."""
     with patch("app.services.storage.boto3.client") as mock_client:
         service = StorageService(
             endpoint_url="",
@@ -141,8 +141,7 @@ def test_storage_empty_string_normalization():
 def test_storage_presigned_urls_with_public_endpoint():
     """Presigned URLs use public endpoint when distinct public endpoint is configured."""
     with patch("app.services.storage.boto3.client") as mock_client:
-        mock_internal = mock_client.return_value
-        service = StorageService(
+        _ = StorageService(
             endpoint_url="http://internal-minio:9000",
             public_endpoint_url="https://cdn.example.com",
             aws_access_key_id="customkey",

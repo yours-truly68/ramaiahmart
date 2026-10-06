@@ -47,7 +47,9 @@ class StorageService:
         presigned_expiration: int | None = None,
     ) -> None:
         raw_endpoint = endpoint_url if endpoint_url is not None else settings.S3_ENDPOINT_URL
-        self.endpoint_url = raw_endpoint.strip() if (raw_endpoint and raw_endpoint.strip()) else None
+        self.endpoint_url = (
+            raw_endpoint.strip() if (raw_endpoint and raw_endpoint.strip()) else None
+        )
 
         raw_public_endpoint = (
             public_endpoint_url
@@ -148,7 +150,8 @@ class StorageService:
             logger.warning("Could not generate presigned upload URL for %s: %s", storage_key, e)
             if self.public_endpoint_url:
                 return f"{self.public_endpoint_url.rstrip('/')}/{self.bucket_name}/{storage_key}"
-            return f"https://{self.bucket_name}.s3.{self.region_name or 'amazonaws'}.com/{storage_key}"
+            region = self.region_name or "amazonaws"
+            return f"https://{self.bucket_name}.s3.{region}.com/{storage_key}"
 
     def generate_download_url(self, storage_key: str, expires_in: int | None = None) -> str:
         """Generate a presigned GET download URL for reading an object."""
@@ -168,7 +171,8 @@ class StorageService:
             logger.warning("Could not generate presigned download URL for %s: %s", storage_key, e)
             if self.public_endpoint_url:
                 return f"{self.public_endpoint_url.rstrip('/')}/{self.bucket_name}/{storage_key}"
-            return f"https://{self.bucket_name}.s3.{self.region_name or 'amazonaws'}.com/{storage_key}"
+            region = self.region_name or "amazonaws"
+            return f"https://{self.bucket_name}.s3.{region}.com/{storage_key}"
 
     def object_exists(self, storage_key: str) -> bool:
         """Verify if an object exists in storage via HEAD request."""
