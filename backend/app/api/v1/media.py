@@ -17,7 +17,7 @@ from app.schemas.media import (
     UploadUrlRequest,
     UploadUrlResponse,
 )
-from app.services.storage import StorageService
+from app.services.storage import MIME_EXTENSION_MAP, StorageService, detect_image_format
 
 router = APIRouter(prefix="/media", tags=["Media"])
 
@@ -127,13 +127,73 @@ def complete_upload(
             status_code=status.HTTP_400_BAD_REQUEST,
         )
 
-    # Verify object existence in object store
+    # 1. Verify object existence and metadata in object store
     if not storage_service.object_exists(payload.storage_key):
         raise AppException(
             code="OBJECT_NOT_FOUND",
             message=(
                 "Uploaded file not found in storage. Ensure upload succeeded before completing."
             ),
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+
+    metadata = storage_service.get_object_metadata(payload.storage_key)
+    if metadata is None:
+        raise AppException(
+            code="OBJECT_NOT_FOUND",
+            message="Uploaded file metadata could not be retrieved from storage.",
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # 2. Enforce authentic file size bounds (reject empty or oversized files)
+    content_length = metadata.get("content_length", 0)
+    if content_length <= 0:
+        storage_service.delete_object(payload.storage_key)
+        raise AppException(
+            code="INVALID_FILE_SIZE",
+            message="Uploaded file cannot be empty.",
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if content_length > settings.MAX_UPLOAD_SIZE_BYTES:
+        storage_service.delete_object(payload.storage_key)
+        raise AppException(
+            code="FILE_TOO_LARGE",
+            message=(
+                f"Uploaded file exceeds maximum permitted size of "
+                f"{settings.MAX_UPLOAD_SIZE_BYTES // (1024 * 1024)} MB."
+            ),
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # 3. Enforce authentic file content signature / magic bytes (bounded range request)
+    header_bytes = storage_service.get_object_header(payload.storage_key, max_bytes=512)
+    detected_mime = detect_image_format(header_bytes)
+    if detected_mime is None or detected_mime not in settings.ALLOWED_IMAGE_MIME_TYPES:
+        storage_service.delete_object(payload.storage_key)
+        raise AppException(
+            code="INVALID_FILE_SIGNATURE",
+            message=(
+                "File content does not match permitted image formats (JPEG, PNG, WebP). "
+                "Executable, script, or arbitrary non-image files are strictly rejected."
+            ),
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # 4. Verify storage key extension matches detected format
+    expected_ext = MIME_EXTENSION_MAP.get(detected_mime)
+    key_lower = payload.storage_key.lower()
+    valid_ext = False
+    if expected_ext and key_lower.endswith(expected_ext):
+        valid_ext = True
+    elif detected_mime == "image/jpeg" and key_lower.endswith(".jpeg"):
+        valid_ext = True
+
+    if not valid_ext:
+        storage_service.delete_object(payload.storage_key)
+        raise AppException(
+            code="MIME_EXTENSION_MISMATCH",
+            message="File extension in storage key does not match detected image format.",
             status_code=status.HTTP_400_BAD_REQUEST,
         )
 
