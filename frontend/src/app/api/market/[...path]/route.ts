@@ -39,15 +39,19 @@ async function proxy(
   const path = (await context.params).path.join("/");
   const method = request.method;
   const postPath = new RegExp(`^posts/${uuid}$`).test(path);
+  const convPath = new RegExp(`^conversations(?:/${uuid}(?:/messages|/close)?)?$`).test(path);
+  const postConvPath = new RegExp(`^posts/${uuid}/conversations$`).test(path);
+  const reportPath = path === "reports" || new RegExp(`^reports/${uuid}$`).test(path);
+
   const allowed =
     method === "GET"
-      ? /^(categories|posts|users\/me(?:\/posts|\/stats)?|auth\/config|media\/config|legal\/(documents(?:\/[A-Za-z_-]+)?|consent-status))$/.test(
+      ? /^(categories|posts|users\/me(?:\/posts|\/stats)?|auth\/config|media\/config|legal\/(documents(?:\/[A-Za-z_-]+)?|consent-status)|conversations)$/.test(
           path,
-        ) || postPath
+        ) || postPath || convPath || reportPath
       : method === "POST"
-        ? /^(auth\/(login|register|logout)|posts|media\/(upload-url|complete)|legal\/consent|users\/me\/deletion-(request|cancel))$/.test(
+        ? /^(auth\/(login|register|logout)|posts|media\/(upload-url|complete)|legal\/consent|users\/me\/deletion-(request|cancel)|reports)$/.test(
             path,
-          ) || new RegExp(`^posts/${uuid}/(publish|close)$`).test(path)
+          ) || new RegExp(`^posts/${uuid}/(publish|close)$`).test(path) || convPath || postConvPath
         : method === "PATCH"
           ? path === "users/me" || postPath
           : method === "DELETE" &&

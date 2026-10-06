@@ -5,9 +5,10 @@ import { useQuery } from "@tanstack/react-query";
 import { api, ApiError, errorMessage } from "@/lib/api/client";
 import type { User } from "@/lib/api/types";
 import { Button, Skeleton } from "@/components/ui";
+import { safeNextPath } from "@/lib/security/url";
 
-export function safeNext(value: string | null) {
-  return value && /^\/(?!\/)/.test(value) && !/[\\\u0000-\u001f]/.test(value) && !/^\/(login|register)([/?#]|$)/.test(value) ? value : "/profile";
+export function safeNext(value: string | null | undefined): string {
+  return safeNextPath(value);
 }
 export function useSession() {
   return useQuery({ queryKey: ["me"], queryFn: async ({ signal }) => {

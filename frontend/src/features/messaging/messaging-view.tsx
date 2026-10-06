@@ -25,6 +25,7 @@ import type {
 import { Avatar, Badge, Button, Skeleton } from "@/components/ui";
 import { SiteFooter, SiteHeader } from "@/components/marketplace/site-header";
 import { relativeTime } from "@/features/marketplace/presentation";
+import { isSafeHttpUrl } from "@/lib/security/url";
 
 function MessageBubble({
   message,
@@ -280,12 +281,12 @@ function ActiveThread({
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0 }}>
-          {conversation.post_image_url ? (
+          {conversation.post_image_url && isSafeHttpUrl(conversation.post_image_url) ? (
             /* Listing image URLs are supplied by API storage */
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={conversation.post_image_url}
-              alt=""
+              alt={conversation.post_title || "Marketplace listing photo"}
               style={{
                 width: "44px",
                 height: "44px",

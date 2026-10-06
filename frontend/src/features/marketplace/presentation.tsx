@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Bike, BookOpen, Ellipsis, FileText, House, Laptop, Armchair, Shirt, Volleyball, Package, type LucideIcon } from "lucide-react";
 import type { Post } from "@/lib/api/types";
+import { isSafeHttpUrl } from "@/lib/security/url";
 
 // Presentation hints only. Category identities and names always come from the API.
 export const categoryStyles: Record<string, { icon: LucideIcon; tone: string; order: number }> = {
@@ -33,7 +34,7 @@ export function relativeTime(date: string) {
 export function ListingImage({ post, detail = false }: { post: Post; detail?: boolean }) {
   const [failed, setFailed] = useState(false);
   const images = post?.images ? [...post.images] : [];
-  const image = images.sort((a, b) => a.position - b.position).find(item => item.public_url && /^https?:\/\//i.test(item.public_url));
+  const image = images.sort((a, b) => a.position - b.position).find(item => item.public_url && isSafeHttpUrl(item.public_url));
   const { icon: Icon, tone } = categoryStyle(post?.category?.slug ?? "");
   return <div className={`listing-photo tone-${tone} ${detail ? "listing-photo--detail" : ""}`}>
     {image && !failed ?

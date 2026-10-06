@@ -10,6 +10,7 @@ import type { Conversation, Post, ReportReason } from "@/lib/api/types";
 import { Badge, Button, Skeleton, StatusBadge } from "@/components/ui";
 import { Dialog } from "./dialog";
 import { ListingImage, priceLabel, relativeTime } from "./presentation";
+import { isSafeWhatsAppUrl } from "@/lib/security/url";
 
 export function DetailPanel({ id, onClose }: { id: string; onClose: () => void }) {
   const router = useRouter();
@@ -104,9 +105,9 @@ export function DetailPanel({ id, onClose }: { id: string; onClose: () => void }
                   : "Offer this item"}
             </Button>
 
-            {query.data.whatsapp_url && (
+            {isSafeWhatsAppUrl(query.data.whatsapp_url) && (
               <a
-                href={query.data.whatsapp_url}
+                href={query.data.whatsapp_url!}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="rm-button rm-button--secondary rm-button--md"
