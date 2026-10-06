@@ -584,14 +584,8 @@ Campus networks route hundreds of students through shared NAT public IPs. FastAP
    - Does not reveal whether an email exists.
 2. **Registration (`POST /api/v1/auth/register`)**:
    - IP policy: 10 registrations per hour per IP (supports dorm/lab setups while preventing mass bot registrations).
-3. **OTP Verification (`POST /api/v1/auth/verify`)**:
-   - Verification cycle: Maximum 5 OTP attempts allowed per code. On the 5th failed attempt, the verification code is permanently invalidated (`used_at` set in database), returning `MAX_ATTEMPTS_EXCEEDED`.
-   - Endpoint rate limits: 25 attempts/15 min per IP, 10 attempts/15 min per email.
-   - OTP values are never logged and never returned in production responses.
-4. **OTP Resend (`POST /api/v1/auth/resend-verification`)**:
-   - 60-second cooldown per email/account.
-   - Max 5 resends per hour per email.
-5. **Token Refresh (`POST /api/v1/auth/refresh`)**:
+   - Restricted strictly to `@msrit.edu` university domain.
+3. **Token Refresh (`POST /api/v1/auth/refresh`)**:
    - 30 requests/minute per IP, ensuring smooth client token refreshes without disruption.
 6. **Standard Error Response**:
    When rate limited, returns HTTP 429 with `Retry-After: <seconds>` header:

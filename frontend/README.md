@@ -37,16 +37,16 @@ pnpm build
 - Cards use the API’s `images[].public_url`, ordered by `position`, with image-failure/no-photo fallbacks. Prices are decimal strings formatted in INR. `price_unit`, category, type, and timestamps come directly from the response. The backend does not expose location, so no location is invented.
 - Category names and IDs come from the API. Presentation hints assign the initial nine slugs their icon, color, and order. Additional backend categories remain selectable in the feed and draft form.
 - Post Item, I HAVE, I NEED, and mobile posting actions lead to `/post/create`, optionally preselecting OFFER or REQUEST.
-- `/login` and `/register` use the real backend authentication and verification endpoints. Both access and refresh tokens stay in server-set HttpOnly, SameSite=Lax cookies (Secure in production). The proxy refreshes expired access sessions, clears invalid sessions, and revokes the refresh token on logout.
-- `/profile` shows authenticated identity, university verification, editable name/bio, private paginated listings/requests, and database-backed counts. Unsupported saved items, reviews, purchase counts, usernames, and department fields are omitted.
+- `/login` and `/register` use the real backend authentication endpoints. Both access and refresh tokens stay in server-set HttpOnly, SameSite=Lax cookies (Secure in production). The proxy refreshes expired access sessions, clears invalid sessions, and revokes the refresh token on logout.
+- `/profile` shows authenticated identity, editable name/bio, private paginated listings/requests, and database-backed counts. Account status (Active/Inactive/Deletion pending), 15-day deletion grace period management, and cancellation are fully integrated.
 - `/post/create` saves real drafts, supports resumption, validates backend constraints, previews edits, uploads directly to presigned object-storage URLs, and submits through the backend moderation flow. Published, pending-review, and rejected outcomes remain distinct.
-- Verification codes are shown only when the backend explicitly returns its development code. The backend currently has no email delivery, resend, or password-reset implementation; the UI explains this limitation instead of claiming an email was sent.
+- Automated email delivery and password-reset emails are intentionally disabled in V1. Forgotten passwords follow a manual recovery route to support at mohammedrazim880@gmail.com.
 - Feed/category loading skeletons, warm empty states, sanitized errors, and retry actions cover network-dependent sections. No marketplace records are mocked or seeded by the frontend.
 
 ## Structure
 
 - `src/features/marketplace/`: homepage composition, cards, presentation helpers, and listing detail dialogs.
-- `src/features/account/`: registration, login, email verification, profile, and shared account styling.
+- `src/features/account/`: registration, login, profile, and shared account styling.
 - `src/features/posting/`: four-step creation, direct uploads, live preview, and moderation outcomes.
 - `src/lib/api/`: types matching the backend schemas and the API request helper.
 - `src/app/api/market/[...path]/`: narrow backend proxy and session-cookie handling.

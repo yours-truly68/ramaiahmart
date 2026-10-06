@@ -396,26 +396,27 @@ async def test_unauthorized_user_cannot_delete_other_accounts():
 
 
 @pytest.mark.asyncio
-async def test_user_cannot_delete_another_users_account():
-    """No id-scoped delete route exists: an authenticated user can never delete
-    another user's account by changing a user id in the URL.
+async def test_id_scoped_deletion_security():
+    """An authenticated user can never delete another user's account by changing {id}.
 
-    Deletion is self-service only via /users/me/deletion-request.
+    Self-service deletion on own ID schedules 15-day grace period; deleting others returns 403.
     """
     victim = await create_verified_user("victim")
     attacker = await create_verified_user("attacker")
     attacker_headers = {"Authorization": f"Bearer {attacker['access_token']}"}
+    victim_headers = {"Authorization": f"Bearer {victim['access_token']}"}
 
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
-        # Id-scoped user deletion routes must not exist
-        for method, path in (
-            ("delete", f"/api/v1/users/{victim['user_id']}"),
-            ("delete", f"/api/v1/users/{victim['user_id']}/delete"),
-            ("post", f"/api/v1/users/{victim['user_id']}/delete"),
-        ):
-            call = getattr(client, method)
-            resp = await call(path, headers=attacker_headers)
-            assert resp.status_code in (404, 405), f"{method.upper()} {path} must not exist"
+        # 1. Attacker attempting to delete victim's account is rejected with 403
+        resp = await client.delete(f"/api/v1/users/{victim['user_id']}", headers=attacker_headers)
+        assert resp.status_code == 403
+        assert resp.json()["error"]["code"] == "FORBIDDEN"
+
+        # Arbitrary /delete suffix routes do not exist
+        resp_suffix = await client.delete(
+            f"/api/v1/users/{victim['user_id']}/delete", headers=attacker_headers
+        )
+        assert resp_suffix.status_code == 404
 
         # The victim's account is untouched and fully active
         db = SessionLocal()
@@ -423,6 +424,13 @@ async def test_user_cannot_delete_another_users_account():
         assert victim_user is not None
         assert victim_user.status == UserStatus.ACTIVE
         db.close()
+
+        # 2. Self-service deletion on own ID succeeds and schedules 15-day deletion
+        self_resp = await client.delete(
+            f"/api/v1/users/{victim['user_id']}", headers=victim_headers
+        )
+        assert self_resp.status_code == 200
+        assert self_resp.json()["status"] == "DELETION_PENDING"
 
 
 # ==========================================

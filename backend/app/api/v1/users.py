@@ -1,10 +1,12 @@
 import math
+import uuid
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.api.deps import get_current_user
+from app.core.errors import AppException
 from app.db.session import get_db
 from app.models.post import Post, PostStatus, PostType
 from app.models.user import User
@@ -91,6 +93,32 @@ def deletion_cancel(
     """Explicitly cancel a pending deletion request and restore account to ACTIVE status."""
     updated_user = cancel_account_deletion(user=current_user, db=db)
     return UserResponse.model_validate(updated_user)
+
+
+@router.delete(
+    "/{user_id}",
+    response_model=DeletionRequestResponse,
+    summary="Self-service account deletion request by user ID",
+)
+def delete_user_by_id(
+    user_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> DeletionRequestResponse:
+    """Self-service endpoint requesting account deletion with 15-day grace period.
+
+    Critical security requirement: Users may only request deletion for their own account.
+    Enforces current_user.id == user_id. Unauthorized attempts to delete another user's
+    account are rejected with HTTP 403 Forbidden.
+    """
+    if current_user.id != user_id:
+        raise AppException(
+            code="FORBIDDEN",
+            message="You are not authorized to delete another user's account.",
+            status_code=403,
+        )
+    return request_account_deletion(user=current_user, db=db)
+
 
 
 @router.get("/me/posts", response_model=PostListResponse, summary="List all of my posts")
