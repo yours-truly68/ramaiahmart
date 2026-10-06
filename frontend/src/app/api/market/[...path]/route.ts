@@ -6,7 +6,6 @@ const base = (
 ).replace(/\/$/, "");
 const accessName = "ramaiahmart_access";
 const refreshName = "ramaiahmart_refresh";
-const uuid = "[0-9a-fA-F-]{36}";
 const cookieOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
@@ -38,24 +37,53 @@ async function proxy(
 ) {
   const path = (await context.params).path.join("/");
   const method = request.method;
-  const postPath = new RegExp(`^posts/${uuid}$`).test(path);
-  const convPath = new RegExp(`^conversations(?:/${uuid}(?:/messages|/close)?)?$`).test(path);
-  const postConvPath = new RegExp(`^posts/${uuid}/conversations$`).test(path);
-  const reportPath = path === "reports" || new RegExp(`^reports/${uuid}$`).test(path);
+  // Explicit UUID pattern matching standard 8-4-4-4-12 hex UUID format
+  const uuidPattern = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
+  const isPostId = new RegExp(`^posts/${uuidPattern}$`).test(path);
+  const isPostAction = new RegExp(`^posts/${uuidPattern}/(publish|close)$`).test(path);
+  const isPostConv = new RegExp(`^posts/${uuidPattern}/conversations$`).test(path);
+  const isConvId = new RegExp(`^conversations/${uuidPattern}$`).test(path);
+  const isConvMessages = new RegExp(`^conversations/${uuidPattern}/messages$`).test(path);
+  const isConvClose = new RegExp(`^conversations/${uuidPattern}/close$`).test(path);
+  const isReportId = new RegExp(`^reports/${uuidPattern}$`).test(path);
+  const isMediaId = new RegExp(`^media/${uuidPattern}$`).test(path);
 
   const allowed =
     method === "GET"
-      ? /^(categories|posts|users\/me(?:\/posts|\/stats)?|auth\/config|media\/config|legal\/(documents(?:\/[A-Za-z_-]+)?|consent-status)|conversations)$/.test(
-          path,
-        ) || postPath || convPath || reportPath
+      ? path === "categories" ||
+        path === "posts" ||
+        isPostId ||
+        path === "users/me" ||
+        path === "users/me/posts" ||
+        path === "users/me/stats" ||
+        path === "auth/config" ||
+        path === "media/config" ||
+        path === "conversations" ||
+        isConvId ||
+        isConvMessages ||
+        isReportId ||
+        path === "legal/documents" ||
+        /^legal\/documents\/[A-Za-z0-9_-]+$/.test(path) ||
+        path === "legal/consent-status"
       : method === "POST"
-        ? /^(auth\/(login|register|logout)|posts|media\/(upload-url|complete)|legal\/consent|users\/me\/deletion-(request|cancel)|reports)$/.test(
-            path,
-          ) || new RegExp(`^posts/${uuid}/(publish|close)$`).test(path) || convPath || postConvPath
+        ? path === "auth/login" ||
+          path === "auth/register" ||
+          path === "auth/logout" ||
+          path === "auth/refresh" ||
+          path === "posts" ||
+          isPostAction ||
+          isPostConv ||
+          isConvMessages ||
+          isConvClose ||
+          path === "media/upload-url" ||
+          path === "media/complete" ||
+          path === "reports" ||
+          path === "legal/consent" ||
+          path === "users/me/deletion-request" ||
+          path === "users/me/deletion-cancel"
         : method === "PATCH"
-          ? path === "users/me" || postPath
-          : method === "DELETE" &&
-            (new RegExp(`^media/${uuid}$`).test(path) || postPath);
+          ? path === "users/me" || isPostId
+          : method === "DELETE" && (isPostId || isMediaId);
   if (!allowed) return response({ error: { code: "NOT_FOUND" } }, 404);
   if (method !== "GET") {
     let sameOrigin = false;
@@ -180,7 +208,7 @@ async function proxy(
     }
     if (res.status === 204) return new NextResponse(null, { status: 204 });
     const data = await res.json().catch(() => ({}));
-    if (path === "auth/login") {
+    if (path === "auth/login" || path === "auth/refresh") {
       setTokens(data);
       return response({ success: true });
     }

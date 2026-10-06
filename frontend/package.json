@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit",
-    "test:security": "node scripts/test-security-seo.mjs"
+    "test:security": "node scripts/test-security-seo.mjs && node scripts/test-api-proxy.mjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.104.1",
