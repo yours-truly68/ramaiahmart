@@ -20,8 +20,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  validate-ci:
-    name: Validate CI Suite
+  validate-backend-ci:
+    name: Validate Backend CI
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -79,10 +79,51 @@ jobs:
           JWT_SECRET_KEY: testing-insecure-secret-key-min-32-characters-for-ci
         run: uv run pytest -q
 
+  validate-frontend-ci:
+    name: Validate Frontend CI
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.18.3
+          run_install: false
+
+      - name: Set up Node.js 22 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+          cache-dependency-path: "frontend/pnpm-lock.yaml"
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint frontend (ESLint)
+        run: pnpm run lint
+
+      - name: Typecheck frontend (TypeScript)
+        run: pnpm run typecheck
+
+      - name: Build Next.js production bundle
+        env:
+          NODE_ENV: production
+        run: pnpm run build
+
+      - name: Run security & proxy tests
+        run: pnpm run test:security
+
   build-and-push-ghcr:
     name: Build & Push Image to GHCR
     runs-on: ubuntu-latest
-    needs: [validate-ci]
+    needs: [validate-backend-ci, validate-frontend-ci]
     outputs:
       image_uri: ${{ steps.image-meta.outputs.image_uri }}
       image_tag: ${{ steps.image-meta.outputs.image_tag }}

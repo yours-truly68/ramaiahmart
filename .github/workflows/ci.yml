@@ -111,13 +111,13 @@ jobs:
       - name: Typecheck frontend (TypeScript)
         run: pnpm run typecheck
 
-      - name: Run security & proxy tests
-        run: pnpm run test:security
-
       - name: Build Next.js production bundle
         env:
           NODE_ENV: production
         run: pnpm run build
+
+      - name: Run security & proxy tests
+        run: pnpm run test:security
 
   docker-build-ci:
     name: Docker Image Build Validation
