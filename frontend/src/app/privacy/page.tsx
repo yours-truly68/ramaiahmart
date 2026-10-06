@@ -4,10 +4,24 @@ import { SiteHeader } from "@/components/marketplace/site-header";
 import { SiteFooter } from "@/components/marketplace/site-footer";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy — RamaiahMart",
+  title: "Privacy Policy",
   description:
-    "Official Privacy Policy detailing student data handling, account lifecycle, inactivity, 15-day deletion grace period, and disaster-recovery backup rotation on RamaiahMart.",
+    "Official Privacy Policy detailing student data handling, account lifecycle, inactivity, 15-day deletion grace period, and backup policies on RamaiahMart.",
+  alternates: {
+    canonical: "/privacy",
+  },
+  openGraph: {
+    title: "Privacy Policy — RamaiahMart",
+    description:
+      "Privacy Policy detailing student data handling and account lifecycle on RamaiahMart.",
+    url: "/privacy",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
+
 
 export default function PrivacyPage() {
   return (

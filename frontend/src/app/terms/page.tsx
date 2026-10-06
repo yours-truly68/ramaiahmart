@@ -5,10 +5,24 @@ import { SiteHeader } from "@/components/marketplace/site-header";
 import { SiteFooter } from "@/components/marketplace/site-footer";
 
 export const metadata: Metadata = {
-  title: "Terms & Conditions — RamaiahMart",
+  title: "Terms & Conditions",
   description:
     "Terms of Service governing student access, marketplace exchange rules, account lifecycle, peer transactions, and conduct on RamaiahMart.",
+  alternates: {
+    canonical: "/terms",
+  },
+  openGraph: {
+    title: "Terms & Conditions — RamaiahMart",
+    description:
+      "Platform agreement and Terms of Service governing student access on RamaiahMart.",
+    url: "/terms",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
+
 
 export default function TermsPage() {
   return (

@@ -14,6 +14,16 @@ const palette = [
 ];
 const states: PostStatus[] = ["DRAFT", "PENDING_REVIEW", "PUBLISHED", "REJECTED", "ARCHIVED", "SOLD", "RENTED", "CLOSED"];
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Design System",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
+
 export default function DesignSystem() {
   return (
     <>

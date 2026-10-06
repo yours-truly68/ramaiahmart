@@ -5,10 +5,24 @@ import { SiteHeader } from "@/components/marketplace/site-header";
 import { SiteFooter } from "@/components/marketplace/site-footer";
 
 export const metadata: Metadata = {
-  title: "Forgot password — RamaiahMart",
+  title: "Forgot password",
   description:
-    "RamaiahMart password recovery: automated password-reset emails are currently unavailable. Contact support at mohammedrazim880@gmail.com with your @msrit.edu address.",
+    "RamaiahMart account recovery: automated password-reset emails are currently unavailable. Contact RamaiahMart support with your @msrit.edu address.",
+  alternates: {
+    canonical: "/forgot-password",
+  },
+  openGraph: {
+    title: "Forgot password — RamaiahMart",
+    description:
+      "RamaiahMart account recovery instructions for verified student accounts.",
+    url: "/forgot-password",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
+
 
 export default function ForgotPasswordPage() {
   return (
