@@ -65,9 +65,7 @@ def test_storage_b_production_iam_role_mode():
 
 def test_storage_c_production_rejects_development_credentials():
     """Test C: Production configuration rejects default minioadmin credentials."""
-    with pytest.raises(
-        ValueError, match="Cannot use default development minioadmin credentials"
-    ):
+    with pytest.raises(ValueError, match="Cannot use default development minioadmin credentials"):
         Settings(
             APP_ENV="production",
             JWT_SECRET_KEY="a" * 32,

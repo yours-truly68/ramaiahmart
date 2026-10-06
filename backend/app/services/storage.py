@@ -62,9 +62,7 @@ class StorageService:
             self.public_endpoint_url = self.endpoint_url
 
         raw_access_key = (
-            aws_access_key_id
-            if aws_access_key_id is not None
-            else settings.AWS_ACCESS_KEY_ID
+            aws_access_key_id if aws_access_key_id is not None else settings.AWS_ACCESS_KEY_ID
         )
         self.aws_access_key_id = (
             raw_access_key.strip() if (raw_access_key and raw_access_key.strip()) else None
@@ -80,9 +78,7 @@ class StorageService:
         )
 
         raw_region = region_name if region_name is not None else settings.AWS_REGION
-        self.region_name = (
-            raw_region.strip() if (raw_region and raw_region.strip()) else None
-        )
+        self.region_name = raw_region.strip() if (raw_region and raw_region.strip()) else None
 
         self.bucket_name = bucket_name or settings.S3_BUCKET_NAME
         self.presigned_expiration = (
