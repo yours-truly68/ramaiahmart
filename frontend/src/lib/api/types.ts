@@ -12,8 +12,33 @@ export type Post = {
   created_at: string; updated_at: string; published_at: string | null; images: PostImage[];
 };
 export type PostPage = { items: Post[]; total: number; page: number; page_size: number; pages: number };
-export type User = { id: string; name: string; email: string; university_verified: boolean; profile_image_key: string | null; profile_image_url: string | null; bio: string | null; created_at: string; updated_at: string };
 
-export type AuthConfig = { allowed_email_domains: string[]; password_min_length: number; verification_code_available: boolean; email_delivery_available: boolean };
+export type AccountStatus = "ACTIVE" | "INACTIVE" | "DELETION_PENDING";
+
+export type User = {
+  id: string;
+  name: string;
+  email: string;
+  university_verified: boolean;
+  profile_image_key: string | null;
+  profile_image_url: string | null;
+  bio: string | null;
+  status: AccountStatus;
+  last_activity_at: string | null;
+  last_login_at: string | null;
+  inactive_at: string | null;
+  deletion_requested_at: string | null;
+  deletion_scheduled_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DeletionRequestResponse = {
+  status: AccountStatus;
+  deletion_requested_at: string;
+  deletion_scheduled_at: string;
+};
+
+export type AuthConfig = { allowed_email_domains: string[]; password_min_length: number };
 export type MediaConfig = { max_file_size: number; content_types: string[] };
 export type UserPostStats = { listings: number; requests: number; published: number };

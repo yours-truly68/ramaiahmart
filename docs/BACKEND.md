@@ -615,3 +615,43 @@ To prevent security vulnerabilities:
 - **JWT Secret Key:** `JWT_SECRET_KEY` must be at least 32 characters in production. If set to default or insecure values when `APP_ENV=production`, the application raises a `RuntimeError` and terminates startup immediately.
 - **Debug Mode:** `DEBUG=True` is strictly disallowed in production mode.
 - **No Committed Secrets:** Credentials, private keys, and secrets are passed exclusively via environment variables.
+
+---
+
+## 21. Account Lifecycle, Deletion & Disaster Recovery Backup (Phase 5)
+
+### Account Status State Machine
+- `ACTIVE`: Normal operating state.
+- `INACTIVE`: After 90 days without meaningful activity. Non-destructive; no suspension, no loss of posts/messages. Reactivates immediately to `ACTIVE` upon any meaningful authenticated activity.
+- `DELETION_PENDING`: Triggered by `POST /api/v1/users/me/deletion-request`. Account enters a strict 15-day grace period.
+
+```text
+ACTIVE  ────────(90 days inactivity)───────>  INACTIVE
+  │                                               │
+  │ <──────(meaningful activity / login)──────────┘
+  │
+  ├───────(POST deletion-request)───────────>  DELETION_PENDING
+  │                                               │
+  │ <──────(login / meaningful activity / cancel)─┤
+  │                                               │ (15 days no activity)
+  │                                               v
+  └───────────────────────────────────────> PERMANENT DELETION
+```
+
+### Meaningful Activity Tracking
+Meaningful activity is tracked centrally via `record_user_activity(user, db)`:
+- **Qualifying events:** Login, creating a post, editing a post, publishing a post, closing a post, sending a conversation message, updating profile details, cancelling deletion.
+- **Excluded:** Token refresh, anonymous browsing, GET requests, loading feeds or profile views, health checks.
+
+### Deletion & Object Storage Cleanup
+- **Grace Period (15 Days):** If a user logs in or performs any meaningful activity during the 15-day grace period, pending deletion is immediately cancelled.
+- **Permanent Purge:** Accounts where `status == DELETION_PENDING` and `deletion_scheduled_at <= now()` are processed:
+  1. Storage objects (`user.profile_image_key`, all post images) are removed from S3/MinIO. Missing objects do not fail the deletion.
+  2. Relational data (User, Posts, Conversations, Messages, Legal Consents, Verification Codes, Tokens) is removed cleanly via cascade.
+  3. Operation is idempotent and retryable on failure.
+
+### Disaster-Recovery Backup Synchronization
+- **Retention:** Rolling 7-day backup retention.
+- **Authoritative Reconciliation:** The disaster recovery backup mirrors the current production database. Accounts permanently deleted in production are omitted from the next backup generation.
+- **Fault-Tolerant Promotion:** A new backup generation is verified before promotion; previous known-good backups remain intact if a backup cycle fails.
+

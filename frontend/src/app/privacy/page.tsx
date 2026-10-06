@@ -6,7 +6,7 @@ import { SiteFooter } from "@/components/marketplace/site-footer";
 export const metadata: Metadata = {
   title: "Privacy Policy — RamaiahMart",
   description:
-    "Official Privacy Policy detailing student data handling, university verification, cookie usage, and storage security on RamaiahMart.",
+    "Official Privacy Policy detailing student data handling, account lifecycle, inactivity, 15-day deletion grace period, and disaster-recovery backup rotation on RamaiahMart.",
 };
 
 export default function PrivacyPage() {
@@ -28,52 +28,59 @@ export default function PrivacyPage() {
 
         <article className="legal-content-body">
           <section className="legal-section">
-            <h2>1. Overview & Commitment</h2>
+            <h2>1. Platform Operator & Institutional Disclaimer</h2>
             <p>
-              RamaiahMart is designed to connect students of Ramaiah Institute of Technology (MSRIT)
-              for safe, peer-to-peer campus exchanges. We believe in minimal data collection: we
-              collect only what is strictly required to verify student identity, safeguard the campus
-              community from scammers, and enable peer discovery.
+              RamaiahMart is operated independently by <strong>Mohammad Razim</strong>. For all privacy inquiries,
+              account deletion requests, data inquiries, legal notices, platform support, and reports, you can reach
+              out directly via email at{" "}
+              <a href="mailto:mohammedrazim880@gmail.com" className="cookie-link">
+                mohammedrazim880@gmail.com
+              </a>
+              .
+            </p>
+            <p>
+              <strong>Institutional Disclaimer:</strong> RamaiahMart is an independent student marketplace designed
+              for campus peer exchange and is <strong>not affiliated with, owned by, operated by, sponsored by, or
+              endorsed by Ramaiah Institute of Technology (MSRIT/RIT)</strong>.
             </p>
             <p>
               <strong>We do not sell student data, rent contact lists, or run third-party behavioral
               advertising networks.</strong>
             </p>
-            <div className="legal-review-callout">
-              <span className="legal-review-tag">[REVIEW REQUIRED: institutional affiliation status]</span>
-              <p>
-                RamaiahMart is an open student platform developed for Ramaiah Institute of Technology
-                students. Formal data sharing agreements with the university administration (MSRIT)
-                are subject to institutional review.
-              </p>
-            </div>
           </section>
 
           <section className="legal-section">
             <h2>2. Information We Collect</h2>
-            <p>We process the following categories of information:</p>
+            <p>We process only data strictly necessary to operate and secure the marketplace:</p>
             <ul>
               <li>
-                <strong>Identity & Account Data:</strong> Your full name, university email address
-                (e.g., <code>you@msrit.edu</code>), password (stored as a one-way cryptographic bcrypt
-                hash; we never store or see your plaintext password), optional profile biography,
-                and optional avatar image.
+                <strong>Account & Profile Information:</strong> Full name, university email address (e.g.,{" "}
+                <code>you@msrit.edu</code>), one-way cryptographic bcrypt password hash (we never store or view
+                plaintext passwords), optional biography, and optional profile avatar image.
               </li>
               <li>
-                <strong>Verification Data:</strong> 6-digit one-time verification codes (OTPs)
-                dispatched to confirm university enrollment. OTP codes are rate-limited, expire after
-                a set window, and are invalidated after 5 failed attempts.
+                <strong>Marketplace Content:</strong> Post titles, pricing, descriptions, offer/request classifications,
+                categories, and uploaded item photographs stored in secure object storage.
               </li>
               <li>
-                <strong>Marketplace Content:</strong> Post titles, pricing, descriptions, offer/request
-                classifications, categories, and item photos uploaded to secure S3-compatible object
-                storage.
+                <strong>Conversations & Messaging:</strong> Direct user-to-user messages and timestamps exchanged within
+                the marketplace to facilitate campus item handoffs.
               </li>
               <li>
-                <strong>Technical & Access Logs:</strong> IP address, user-agent string, request
-                paths, timestamps, HTTP status codes, and unique request identifiers. All server
-                logs are strictly sanitized: passwords, authentication tokens, and OTPs are never
-                written to log files.
+                <strong>Moderation & Security Information:</strong> Reports submitted regarding suspicious listings,
+                safety alerts, and administrative moderation actions taken to safeguard the community.
+              </li>
+              <li>
+                <strong>Verification Data:</strong> Time-limited verification codes (OTPs) dispatched during registration
+                to verify academic enrollment, protected with rate limiting and automated invalidation after failed attempts.
+              </li>
+              <li>
+                <strong>Legal & Consent Records:</strong> Records of your explicit acceptance of our Terms & Conditions and
+                Privacy Policy (including document versions and acceptance timestamps) as well as your cookie preferences.
+              </li>
+              <li>
+                <strong>Technical & Security Logs:</strong> IP address, user-agent string, request path, timestamp, and HTTP
+                response codes. Sensitive fields (passwords, tokens, verification codes) are strictly scrubbed and never logged.
               </li>
             </ul>
           </section>
@@ -81,88 +88,131 @@ export default function PrivacyPage() {
           <section className="legal-section">
             <h2>3. Cookie Classification & Usage</h2>
             <p>
-              Cookies are small files stored on your browser. RamaiahMart classifies cookies into
-              two distinct tiers:
+              Cookies are small data files stored on your browser. RamaiahMart classifies cookies into two distinct tiers:
             </p>
             <ul>
               <li>
-                <strong>Strictly Necessary Cookies:</strong> Essential for authentication, session
-                stability, and platform security.
+                <strong>Strictly Necessary Cookies:</strong> Essential for authentication, session stability, and platform
+                security.
                 <br />
                 Examples: <code className="cookie-code">ramaiahmart_access</code> (short-lived JWT),{" "}
-                <code className="cookie-code">ramaiahmart_refresh</code> (long-lived refresh token),
-                and <code className="cookie-code">ramaiahmart_cookie_consent</code> (persists your
-                cookie consent preferences). These cookies use <code>HttpOnly</code>,{" "}
-                <code>SameSite=Lax</code>, and <code>Secure</code> flags in production.
+                <code className="cookie-code">ramaiahmart_refresh</code> (long-lived refresh token), and{" "}
+                <code className="cookie-code">ramaiahmart_cookie_consent</code> (stores your cookie preferences).
+                These cookies use <code>HttpOnly</code>, <code>SameSite=Lax</code>, and <code>Secure</code> flags in production.
               </li>
               <li>
-                <strong>Optional Cookies (Analytics & Marketing):</strong> RamaiahMart currently
-                loads <strong>zero third-party tracking scripts, zero Google Analytics, and zero
-                social media pixels</strong>. We provide preference toggles so you can control any
-                future non-essential features via our Cookie Preferences modal.
+                <strong>Optional Cookies (Analytics & Marketing):</strong> RamaiahMart currently loads{" "}
+                <strong>zero third-party tracking scripts, zero Google Analytics, and zero advertising pixels</strong>. We
+                provide consent toggles so you can control any future non-essential features via our Cookie Preferences modal.
               </li>
             </ul>
           </section>
 
           <section className="legal-section">
-            <h2>4. How We Use Your Information</h2>
-            <p>Your information is used strictly to:</p>
+            <h2>4. Purposes of Processing</h2>
+            <p>Your information is processed strictly for the following purposes:</p>
             <ul>
-              <li>Authenticate your account and maintain your student session.</li>
-              <li>Verify that listings originate from active members of the campus community.</li>
-              <li>Publish and display your marketplace offerings and requests to other students.</li>
-              <li>Moderate listings to prevent fraud, stolen goods, and platform abuse.</li>
-              <li>Protect campus users via network-level and application-level rate limiting.</li>
+              <li>Operating your account and maintaining secure authenticated sessions.</li>
+              <li>Providing marketplace functionality: publishing, editing, searching, and managing listings.</li>
+              <li>Enabling user-to-user communication for coordinating item inspections and handoffs.</li>
+              <li>Reviewing reported listings and enforcing campus safety rules against fraud or abuse.</li>
+              <li>Protecting the platform through network-level and application-level rate limiting.</li>
+              <li>Troubleshooting technical defects and improving service stability.</li>
+              <li>Complying with applicable legal, security, and dispute obligations.</li>
             </ul>
           </section>
 
           <section className="legal-section">
-            <h2>5. Data Storage, Security & Retention</h2>
+            <h2>5. Account Inactivity Policy (Non-Destructive)</h2>
             <p>
-              Data is stored in isolated PostgreSQL database containers and encrypted object
-              storage. All external web traffic is encrypted via Transport Layer Security (TLS/HTTPS)
-              through our Nginx reverse proxy.
+              RamaiahMart does <strong>not</strong> automatically delete your account or destroy your data solely because
+              you have been inactive.
             </p>
-            <div className="legal-review-callout">
-              <span className="legal-review-tag">[REVIEW REQUIRED: retention period]</span>
-              <p>
-                Specific data retention periods for closed listings, chat transcripts (when
-                implemented), and deactivated student accounts must be finalized in conjunction with
-                institutional policies and campus data governance guidelines.
-              </p>
-            </div>
-          </section>
-
-          <section className="legal-section">
-            <h2>6. Your Privacy Rights</h2>
-            <p>As a student user, you have the right to:</p>
+            <p>
+              If an account experiences no meaningful activity (such as logging in, publishing or editing a listing, or sending a
+              message) for approximately <strong>90 days</strong>, it may be marked as <code>INACTIVE</code>. An inactive account:
+            </p>
             <ul>
-              <li>View and update your personal profile information at any time via your account settings.</li>
-              <li>Close, edit, or remove your marketplace listings when an exchange is complete.</li>
-              <li>Inspect and adjust your cookie preferences at any time from the site footer.</li>
-              <li>Request deactivation of your account and deletion of your profile data.</li>
+              <li>Is NOT deleted or suspended.</li>
+              <li>Does NOT lose any posts, messages, or account history.</li>
+              <li>Incurs no penalty or loss of access.</li>
+              <li>Can return normally at any time. Performing any meaningful authenticated activity immediately restores your account to <code>ACTIVE</code> status.</li>
             </ul>
           </section>
 
           <section className="legal-section">
-            <h2>7. Contact & Privacy Requests</h2>
+            <h2>6. User-Requested Account Deletion & 15-Day Grace Period</h2>
             <p>
-              If you have questions about this Privacy Policy or wish to exercise your data rights:
+              You have the right to request deletion of your account at any time through your Profile Settings or by emailing{" "}
+              <a href="mailto:mohammedrazim880@gmail.com" className="cookie-link">
+                mohammedrazim880@gmail.com
+              </a>
+              .
+            </p>
+            <p>
+              When you submit an account deletion request:
             </p>
             <ul>
               <li>
-                Developer & Maintainer:{" "}
-                <a href="mailto:mohammedrazim880@gmail.com" className="cookie-link">
-                  mohammedrazim880@gmail.com
-                </a>
+                <strong>15-Day Grace Period:</strong> Your account enters a <code>DELETION_PENDING</code> state for exactly 15 days.
+                Your account is not destroyed immediately.
               </li>
               <li>
-                Campus Grievance Officer:{" "}
-                <span className="legal-review-tag">
-                  [REVIEW REQUIRED: legal entity / grievance officer contact]
-                </span>
+                <strong>Automatic Cancellation on Activity:</strong> If you log in or perform any qualifying authenticated activity
+                during this 15-day grace period, your deletion request is automatically cancelled, and your account returns to{" "}
+                <code>ACTIVE</code> status. You may also click &ldquo;Cancel deletion&rdquo; in your profile settings.
+              </li>
+              <li>
+                <strong>Permanent Deletion:</strong> After 15 days without qualifying activity, your account and all associated
+                production records (user profile, listings, post images, conversations, and messages) are permanently and
+                irreversibly deleted from the active production database and object storage.
               </li>
             </ul>
+          </section>
+
+          <section className="legal-section">
+            <h2>7. Disaster-Recovery Backups & Retention</h2>
+            <p>
+              RamaiahMart maintains limited rolling backups strictly for disaster recovery, business continuity, and system restoration.
+            </p>
+            <ul>
+              <li>
+                <strong>7-Day Retention:</strong> Backups follow a rolling 7-day retention schedule. Backups older than 7 days are
+                automatically retired and pruned.
+              </li>
+              <li>
+                <strong>Reconciliation on Synchronization:</strong> Backups mirror current authoritative production data. When an account
+                is permanently deleted from production, it is omitted from the subsequent scheduled backup generation.
+              </li>
+              <li>
+                <strong>Backup Latency:</strong> Disaster-recovery backup archives may temporarily retain copies of permanently deleted
+                information until the next scheduled backup generation and rotation cycle completes.
+              </li>
+            </ul>
+          </section>
+
+          <section className="legal-section">
+            <h2>8. User-to-User Transactions Disclaimer</h2>
+            <p>
+              RamaiahMart provides an informational discovery and communication platform for campus members. RamaiahMart is not a buyer,
+              seller, lender, renter, tenant, tutor, service provider, broker, or party to any transaction negotiated between users.
+              Users are solely responsible for inspecting items, verifying counterparties, and conducting handoffs safely in person.
+            </p>
+          </section>
+
+          <section className="legal-section">
+            <h2>9. Contact & Inquiries</h2>
+            <p>
+              For any questions, rights requests, data concerns, or support, please contact the platform maintainer directly:
+            </p>
+            <p>
+              <strong>Mohammad Razim</strong>
+              <br />
+              Email:{" "}
+              <a href="mailto:mohammedrazim880@gmail.com" className="cookie-link">
+                mohammedrazim880@gmail.com
+              </a>
+            </p>
           </section>
         </article>
       </main>

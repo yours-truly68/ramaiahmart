@@ -7,7 +7,7 @@ import { SiteFooter } from "@/components/marketplace/site-footer";
 export const metadata: Metadata = {
   title: "Terms & Conditions — RamaiahMart",
   description:
-    "Terms of Service governing student access, marketplace exchange rules, peer transactions, and conduct on RamaiahMart.",
+    "Terms of Service governing student access, marketplace exchange rules, account lifecycle, peer transactions, and conduct on RamaiahMart.",
 };
 
 export default function TermsPage() {
@@ -29,138 +29,234 @@ export default function TermsPage() {
 
         <article className="legal-content-body">
           <section className="legal-section">
-            <h2>1. Introduction & Campus Scope</h2>
+            <h2>1. Introduction & Institutional Non-Affiliation</h2>
             <p>
-              Welcome to <strong>RamaiahMart</strong>. RamaiahMart is an open, hyper-local peer-to-peer
-              exchange platform designed specifically for students, faculty, and alumni of Ramaiah
-              Institute of Technology (MSRIT), Bengaluru.
+              Welcome to <strong>RamaiahMart</strong>. RamaiahMart is an open,
+              hyper-local peer-to-peer exchange platform created for the student
+              community of Ramaiah Institute of Technology (MSRIT), Bengaluru.
             </p>
             <p>
-              By accessing RamaiahMart or registering an account, you agree to comply with and be
-              bound by these Terms & Conditions and our{" "}
+              <strong>Institutional Non-Affiliation:</strong> RamaiahMart is an
+              independent student project operated by{" "}
+              <strong>Mohammad Razim</strong>. RamaiahMart is{" "}
+              <strong>
+                not affiliated with, owned by, operated by, sponsored by, or
+                endorsed by Ramaiah Institute of Technology (MSRIT/RIT)
+              </strong>
+              .
+            </p>
+            <p>
+              By accessing RamaiahMart or registering an account, you agree to
+              comply with and be bound by these Terms & Conditions and our{" "}
               <Link href="/privacy" className="cookie-link">
                 Privacy Policy
               </Link>
-              . If you do not agree to these terms, you may not create an account or publish listings
-              on the platform.
+              . If you do not agree to these terms, you may not create an
+              account or publish listings on the platform.
             </p>
-            <div className="legal-review-callout">
-              <span className="legal-review-tag">[REVIEW REQUIRED: institutional affiliation status]</span>
-              <p>
-                RamaiahMart is an independent student-led open campus initiative engineered to serve
-                the MSRIT campus. Official university endorsement, partnership status, or formal
-                disciplinary jurisdiction must be confirmed with institutional administration.
-              </p>
-            </div>
           </section>
 
           <section className="legal-section">
-            <h2>2. Account Eligibility & University Verification</h2>
+            <h2>2. Account Eligibility & Responsibilities</h2>
             <ul>
               <li>
-                <strong>Eligible Domains:</strong> Account registration is strictly restricted to
-                individuals possessing an authorized university email address (such as{" "}
+                <strong>Eligible Users:</strong> Account registration is
+                intended for students and members of the campus community
+                possessing an authorized university email address (such as{" "}
                 <code>@msrit.edu</code>).
               </li>
               <li>
-                <strong>Email Verification:</strong> To publish posts or initiate exchanges, users
-                must complete university email verification using a 6-digit one-time password (OTP).
-                Verification codes expire after a set time limit and allow up to 5 attempts before
-                invalidation.
-              </li>
-              <li>
-                <strong>Single Identity:</strong> You agree to provide accurate, truthful name and
-                academic profile details. Account sharing, credential distribution, or impersonation
-                of other students or faculty members is strictly prohibited.
-              </li>
-            </ul>
-          </section>
-
-          <section className="legal-section">
-            <h2>3. Peer-to-Peer Marketplace & Safety Guidelines</h2>
-            <p>
-              RamaiahMart acts solely as a communication and discovery board for campus peers. We
-              facilitate listings for items such as textbooks, drafters, calculators, electronics,
-              bicycles, and room essentials.
-            </p>
-            <ul>
-              <li>
-                <strong>Zero Commission:</strong> RamaiahMart charges zero platform fees or
-                transaction commissions.
-              </li>
-              <li>
-                <strong>In-Person Handoffs:</strong> All purchases, sales, rentals, and loans are
-                conducted directly between students in person. We recommend meeting during daylight
-                hours at visible campus landmark locations (e.g., Apex Block, Campus Canteen,
-                Library steps).
-              </li>
-              <li>
-                <strong>Payments:</strong> RamaiahMart does not process payments or escrow funds.
-                Payments (via UPI or cash) must occur only upon physical inspection and handoff of
-                the item. <em>Never transfer money in advance.</em>
-              </li>
-            </ul>
-          </section>
-
-          <section className="legal-section">
-            <h2>4. Prohibited Items & Conduct</h2>
-            <p>Users must not post, list, or solicit any of the following on RamaiahMart:</p>
-            <ul>
-              <li>Academic dishonesty materials (exam question leaks, unauthorized test papers, graded assignment solutions).</li>
-              <li>Illegal substances, narcotics, alcohol, tobacco, vape products, or prescription pharmaceuticals.</li>
-              <li>Weapons, hazardous equipment, firecrackers, or dangerous chemicals.</li>
-              <li>Stolen property, counterfeit goods, or software infringing intellectual property rights.</li>
-              <li>Offensive, harassing, defamatory, sexually explicit, or discriminatory content.</li>
-            </ul>
-          </section>
-
-          <section className="legal-section">
-            <h2>5. Content Moderation & Account Suspension</h2>
-            <p>
-              All marketplace posts are subject to automated and human campus review before or
-              immediately after publication. RamaiahMart reserves the right to reject, remove, or edit
-              any listing and suspend or terminate any user account that violates these Terms or
-              endangers the campus community.
-            </p>
-            <div className="legal-review-callout">
-              <span className="legal-review-tag">[REVIEW REQUIRED: retention period]</span>
-              <p>
-                Specific data retention windows for removed posts, moderation records, and deleted
-                user profiles require final policy confirmation.
-              </p>
-            </div>
-          </section>
-
-          <section className="legal-section">
-            <h2>6. Limitation of Liability</h2>
-            <p>
-              RamaiahMart is provided on an &ldquo;as is&rdquo; and &ldquo;as available&rdquo; basis
-              without warranties of any kind. RamaiahMart, its creator, and student maintainers are
-              not liable for the quality, safety, legality, or condition of items listed by users,
-              nor for any disputes, financial losses, or physical harm arising from transactions
-              between users.
-            </p>
-          </section>
-
-          <section className="legal-section">
-            <h2>7. Contact & Grievance Redressal</h2>
-            <p>
-              For questions regarding these Terms or to report a campus listing violation:
-            </p>
-            <ul>
-              <li>
-                Engineering & Project Maintainer:{" "}
-                <a href="mailto:mohammedrazim880@gmail.com" className="cookie-link">
+                <strong>Account Security:</strong> You are responsible for
+                safeguarding your login credentials. You must promptly report
+                any unauthorized use of your account to{" "}
+                <a
+                  href="mailto:mohammedrazim880@gmail.com"
+                  className="cookie-link"
+                >
                   mohammedrazim880@gmail.com
                 </a>
+                .
               </li>
               <li>
-                Institutional Campus Liaison:{" "}
-                <span className="legal-review-tag">
-                  [REVIEW REQUIRED: legal entity / grievance officer contact]
-                </span>
+                <strong>Truthful Information:</strong> You agree to provide
+                accurate name and academic profile details. Account sharing,
+                credential trading, or impersonating other students, staff, or
+                faculty is strictly prohibited.
               </li>
             </ul>
+          </section>
+
+          <section className="legal-section">
+            <h2>3. Peer-to-Peer Marketplace & Platform Role</h2>
+            <p>
+              RamaiahMart acts solely as an informational board and discovery
+              platform for campus peers to connect and communicate.
+            </p>
+            <ul>
+              <li>
+                <strong>Not a Transaction Party:</strong> RamaiahMart is not a
+                buyer, seller, lender, renter, tenant, tutor, service provider,
+                or broker in any user exchange. All transactions, negotiations,
+                and handoffs are strictly between the involved users.
+              </li>
+              <li>
+                <strong>Zero Commissions:</strong> RamaiahMart charges zero
+                fees, takes zero commissions, and does not process payments or
+                hold escrow funds.
+              </li>
+              <li>
+                <strong>Evaluation Responsibility:</strong> Users are solely
+                responsible for inspecting items, verifying their functionality
+                and authenticity, and agreeing on terms before completing an
+                exchange.
+              </li>
+              <li>
+                <strong>Safe In-Person Handoffs:</strong> We strongly encourage
+                meeting in well-lit, public campus locations during regular
+                hours (e.g., Campus Canteen,Quadrangle, DES Stairs, ESB, Apex
+                Block, Library steps).{" "}
+                <em>Never send advance payments online.</em>
+              </li>
+            </ul>
+          </section>
+
+          <section className="legal-section">
+            <h2>4. Listing Requirements & Prohibited Content</h2>
+            <p>
+              All listings must reflect genuine campus items and requests. Users
+              may not post, solicit, or share:
+            </p>
+            <ul>
+              <li>
+                Academic dishonesty materials (exam papers, test leaks, graded
+                assignment solutions).
+              </li>
+              <li>
+                Narcotics, illegal substances, alcohol, tobacco, e-cigarettes,
+                or prescription medications.
+              </li>
+              <li>
+                Weapons, explosives, hazardous chemicals, or dangerous items.
+              </li>
+              <li>
+                Stolen goods, counterfeit items, or content infringing
+                third-party intellectual property rights.
+              </li>
+              <li>
+                Harassing, defamatory, abusive, sexually explicit, fraudulent,
+                or discriminatory content.
+              </li>
+              <li>
+                Automated spam, commercial advertising, or links to external
+                phishing sites.
+              </li>
+            </ul>
+          </section>
+
+          <section className="legal-section">
+            <h2>5. Moderation, Reports & Account Suspension</h2>
+            <p>
+              To maintain campus safety, RamaiahMart reserves the right to
+              review, edit, reject, or remove any listing at any time. Users can
+              submit reports regarding suspicious or offensive posts. Accounts
+              found violating these Terms or engaging in abusive behavior may be
+              temporarily restricted or permanently suspended.
+            </p>
+          </section>
+
+          <section className="legal-section">
+            <h2>6. Account Lifecycle: Inactivity & Deletion</h2>
+            <p>
+              RamaiahMart respects user control over account status and data:
+            </p>
+            <ul>
+              <li>
+                <strong>Non-Destructive Inactivity:</strong> An account with no
+                meaningful activity for approximately 90 days may be marked{" "}
+                <code>INACTIVE</code>. Inactivity carries no penalty, no
+                suspension, no loss of posts, and no loss of access. Performing
+                any authenticated activity restores the account to{" "}
+                <code>ACTIVE</code> status.
+              </li>
+              <li>
+                <strong>User-Requested Deletion:</strong> You may request
+                account deletion at any time via your profile settings.
+                Submitting a deletion request places your account into a{" "}
+                <strong>15-day grace period</strong> (
+                <code>DELETION_PENDING</code>).
+              </li>
+              <li>
+                <strong>Grace Period Cancellation:</strong> Logging in or
+                performing authenticated activity during the 15-day grace period
+                automatically cancels the deletion request. You may also click
+                &ldquo;Cancel deletion&rdquo; in your profile.
+              </li>
+              <li>
+                <strong>Permanent Deletion:</strong> If 15 days pass without
+                cancellation or activity, the account, profile data, listings,
+                media images, and messages are permanently purged from the
+                active database and object storage.
+              </li>
+              <li>
+                <strong>Disaster-Recovery Backups:</strong> Disaster recovery
+                backups maintain a rolling 7-day retention schedule. Permanently
+                deleted records are omitted from subsequent backup generations
+                and rotate out of the archive.
+              </li>
+            </ul>
+          </section>
+
+          <section className="legal-section">
+            <h2>7. Intellectual Property</h2>
+            <p>
+              You retain ownership of the photos, descriptions, and content you
+              post on RamaiahMart. By posting on RamaiahMart, you grant the
+              platform a non-exclusive, royalty-free, limited license to display
+              your listing content to other campus users for the purpose of
+              marketplace functionality.
+            </p>
+          </section>
+
+          <section className="legal-section">
+            <h2>8. Service Availability & Changes</h2>
+            <p>
+              RamaiahMart is provided as a student initiative. While we strive
+              for high reliability and uptime, we do not guarantee uninterrupted
+              or error-free operation. We reserve the right to update, modify,
+              or discontinue features with reasonable notice to users.
+            </p>
+          </section>
+
+          <section className="legal-section">
+            <h2>9. Limitation of Liability</h2>
+            <p>
+              To the fullest extent permitted by applicable law, RamaiahMart and
+              its operator are provided on an &ldquo;as is&rdquo; and &ldquo;as
+              available&rdquo; basis. RamaiahMart is not liable for indirect,
+              incidental, or consequential damages, nor for any financial
+              disputes, lost opportunities, or physical injuries arising from
+              user-to-user interactions, transactions, or listings posted on the
+              service.
+            </p>
+          </section>
+
+          <section className="legal-section">
+            <h2>10. Contact Information</h2>
+            <p>
+              For legal inquiries, dispute reporting, platform questions, or
+              privacy requests, contact:
+            </p>
+            <p>
+              <strong>Mohammad Razim</strong>
+              <br />
+              Email:{" "}
+              <a
+                href="mailto:mohammedrazim880@gmail.com"
+                className="cookie-link"
+              >
+                mohammedrazim880@gmail.com
+              </a>
+            </p>
           </section>
         </article>
       </main>

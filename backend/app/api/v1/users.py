@@ -9,7 +9,17 @@ from app.db.session import get_db
 from app.models.post import Post, PostStatus, PostType
 from app.models.user import User
 from app.schemas.post import PostListResponse, PostResponse
-from app.schemas.user import UserPostStats, UserResponse, UserUpdateRequest
+from app.schemas.user import (
+    DeletionRequestResponse,
+    UserPostStats,
+    UserResponse,
+    UserUpdateRequest,
+)
+from app.services.lifecycle import (
+    cancel_account_deletion,
+    record_user_activity,
+    request_account_deletion,
+)
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -44,10 +54,43 @@ def update_me(
     if data.profile_image_key is not None:
         current_user.profile_image_key = data.profile_image_key.strip()
 
+    record_user_activity(current_user, db, commit=False)
     db.commit()
     db.refresh(current_user)
 
     return UserResponse.model_validate(current_user)
+
+
+@router.post(
+    "/me/deletion-request",
+    response_model=DeletionRequestResponse,
+    summary="Request account deletion with 15-day grace period",
+)
+def deletion_request(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> DeletionRequestResponse:
+    """Initiate a 15-day account deletion grace period.
+
+    During this 15-day period, logging in or performing meaningful authenticated activity
+    automatically cancels deletion. If no activity occurs for 15 days, the account and
+    associated data are permanently deleted.
+    """
+    return request_account_deletion(user=current_user, db=db)
+
+
+@router.post(
+    "/me/deletion-cancel",
+    response_model=UserResponse,
+    summary="Cancel pending account deletion request",
+)
+def deletion_cancel(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> UserResponse:
+    """Explicitly cancel a pending deletion request and restore account to ACTIVE status."""
+    updated_user = cancel_account_deletion(user=current_user, db=db)
+    return UserResponse.model_validate(updated_user)
 
 
 @router.get("/me/posts", response_model=PostListResponse, summary="List all of my posts")

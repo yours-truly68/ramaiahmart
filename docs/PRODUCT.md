@@ -502,5 +502,22 @@ Potential V2+ features:
 - Reviews
 - Delivery
 - Identity/trust improvements
-- Semantic search
 - Advanced moderation
+
+---
+
+## 17. Account Lifecycle & Data Governance (Phase 5)
+
+### Inactivity Policy
+- Non-destructive: Inactivity carries zero penalty.
+- After 90 days without meaningful activity, accounts transition to `INACTIVE`.
+- Inactive accounts retain all listings, history, and messages without deletion or suspension.
+- Meaningful authenticated activity immediately restores the account to `ACTIVE`.
+
+### User-Requested Deletion
+- Users can request deletion from profile settings.
+- 15-day grace period (`DELETION_PENDING`).
+- Logging in or performing qualifying activity during the 15-day window automatically cancels deletion.
+- Permanent deletion scrubs relational records and deletes all associated object storage assets.
+- Disaster recovery backups follow a rolling 7-day retention schedule, omitting deleted accounts upon subsequent backup synchronization.
+

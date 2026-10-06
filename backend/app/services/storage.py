@@ -126,10 +126,14 @@ class StorageService:
             return False
 
     def delete_object(self, storage_key: str) -> None:
-        """Delete an object from storage."""
+        """Delete an object from storage. Safe if object is already missing."""
         try:
             self.client.delete_object(Bucket=self.bucket_name, Key=storage_key)
         except ClientError as e:
+            error_code = e.response.get("Error", {}).get("Code", "")
+            if error_code in ("404", "NoSuchKey", "NotFound"):
+                logger.info("Storage object already missing: %s", storage_key)
+                return
             logger.error("Failed to delete storage object %s: %s", storage_key, e)
             raise
 

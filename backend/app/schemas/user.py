@@ -14,6 +14,12 @@ class UserResponse(BaseModel):
     profile_image_key: str | None = None
     university_verified: bool
     is_active: bool
+    status: str = "ACTIVE"
+    last_activity_at: datetime | None = None
+    last_login_at: datetime | None = None
+    inactive_at: datetime | None = None
+    deletion_requested_at: datetime | None = None
+    deletion_scheduled_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -43,3 +49,11 @@ class UserPostStats(BaseModel):
     listings: int
     requests: int
     published: int
+
+
+class DeletionRequestResponse(BaseModel):
+    """Response returned when a user schedules account deletion."""
+
+    status: str
+    deletion_requested_at: datetime
+    deletion_scheduled_at: datetime

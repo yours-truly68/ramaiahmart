@@ -36,15 +36,16 @@
 .auth-benefits svg { color: var(--accent-ink); margin-bottom: 13px; }
 .auth-benefits h3 { font-size: 15px; font-weight: 650; margin-bottom: 7px; }
 .auth-benefits p { font-size: 13px; color: var(--muted-foreground); max-width: 25ch; }
-.verification-form > p { font-size: 14px; color: var(--muted-foreground); overflow-wrap: anywhere; margin-top: 17px; }
-.verification-form .panel-form { margin-top: 25px; }
-.verification-mark { display: grid; place-items: center; border-radius: 50%; background: var(--surface-sage); color: var(--success); width: 55px; height: 55px; }
-.verification-form h2 { font-family: var(--font-display); font-size: 27px; line-height: 1.15; margin-top: 20px; font-weight: 800; letter-spacing: -.7px; }
-.verification-notice, .development-code { padding: 17px; border-radius: 7px; background: var(--warning-soft); color: var(--warning); font-size: 13px; }
-.development-code span { display: block; margin-top: 7px; font-size: 12px; }
-.verification-success { display: grid; gap: 20px; }
-.verification-success svg { color: var(--success); }
-.verification-success p { color: var(--muted-foreground); font-size: 14px; }
+/* Manual password recovery (V1: no automated password-reset emails) */
+.forgot-link { margin-top: 4px; font-size: 13px; text-align: center; }
+.forgot-link a { color: var(--muted-foreground); }
+.forgot-link a:hover { color: var(--foreground); }
+.recovery-card { display: grid; gap: 16px; justify-items: start; padding: 22px; border-radius: 9px; background: var(--surface-sage, #e9eddf); margin-top: 25px; }
+.recovery-card p { font-size: 14px; line-height: 1.55; color: #3f4a38; margin: 0; }
+.recovery-card .cookie-link { color: #2f4a2a; font-weight: 600; }
+.recovery-mark { display: grid; place-items: center; border-radius: 50%; background: #d8e2c8; color: #3c5934; width: 46px; height: 46px; }
+.recovery-fine-print { font-size: 12px; color: #5c6a55; }
+.recovery-card .rm-button { margin-top: 4px; }
 .profile-layout { display: grid; grid-template-columns: 155px minmax(0, 1fr); gap: 38px; padding-top: 35px; min-height: 75vh; }
 .profile-nav { display: flex; flex-direction: column; gap: 8px; padding-top: 15px; padding-right: 10px; }
 .profile-nav > a:not(.sidebar-post), .profile-logout { display: flex; align-items: center; gap: 12px; padding: 12px 9px; font-size: 12px; text-decoration: none; border-radius: 7px; color: var(--muted-foreground); }
@@ -64,7 +65,6 @@
 .identity-email { font-size: 12px; color: var(--muted-foreground); margin-top: 4px; overflow-wrap: anywhere; }
 .university-badge { display: inline-flex; align-items: center; gap: 7px; font-size: 11px; padding: 5px 10px; border-radius: 5px; margin-top: 12px; }
 .university-badge.verified { background: #e5edda; color: #31552e; }
-.university-badge.unverified { background: var(--warning-soft); color: var(--warning); }
 .identity-bio { font-size: 14px; color: #555248; margin-top: 15px; max-width: 540px; white-space: pre-wrap; overflow-wrap: anywhere; }
 .edit-profile { align-self: flex-start; margin-top: 6px; flex-shrink: 0; }
 .profile-stats { display: flex; gap: 42px; padding: 12px 0 26px 155px; border-bottom: 1px solid var(--border); }
@@ -105,10 +105,29 @@
 .profile-aside-card li { display: flex; align-items: center; gap: 9px; font-size: 11px; color: var(--muted-foreground); }
 .complete-icon { color: var(--success); }
 .profile-aside-card .inline-link { margin-top: 12px; font-size: 11px; }
-.verification-card > svg { color: #bcac88; margin-bottom: 17px; }
-.verification-card p { font-size: 12px; color: var(--muted-foreground); margin-top: 12px; }
-.verification-card p.verified-text { color: var(--success); font-weight: 600; }
 .joined-card { display: flex; align-items: center; gap: 13px; font-size: 12px; padding: 14px 20px; color: var(--muted-foreground); }
+/* Account Lifecycle & Management */
+.account-lifecycle-card { display: flex; flex-direction: column; gap: 14px; }
+.account-lifecycle-card h2 { font-family: var(--font-display); font-size: 17px; font-weight: 750; letter-spacing: -0.3px; line-height: 1.2; }
+.lifecycle-status-row { display: flex; align-items: center; gap: 8px; }
+.lifecycle-status-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.lifecycle-status-dot.active { background: #2e7d32; box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.15); }
+.lifecycle-status-dot.inactive { background: #8a8275; box-shadow: 0 0 0 3px rgba(138, 130, 117, 0.2); }
+.lifecycle-status-dot.pending { background: #c25e00; box-shadow: 0 0 0 3px rgba(194, 94, 0, 0.2); }
+.lifecycle-desc { font-size: 12px; color: var(--muted-foreground); line-height: 1.5; }
+.lifecycle-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+.lifecycle-warning-box { background: #fdf5ea; border: 1px solid #ebd0ad; border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.lifecycle-warning-box p { font-size: 12px; color: #874600; line-height: 1.45; margin: 0; }
+.lifecycle-delete-btn { background: transparent; border: 1px solid #dfd3c3; color: #9c2e1b; font-size: 12px; padding: 8px 14px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.15s ease; width: 100%; }
+.lifecycle-delete-btn:hover { background: #fbeeec; border-color: #df978c; }
+.lifecycle-cancel-btn { background: #c25e00; border: none; color: #fff; font-size: 12px; font-weight: 600; padding: 8px 14px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: opacity 0.15s ease; width: 100%; }
+.lifecycle-cancel-btn:hover { opacity: 0.9; }
+.deletion-dialog-content { display: flex; flex-direction: column; gap: 16px; margin-top: 10px; }
+.deletion-dialog-content p { font-size: 13px; line-height: 1.55; color: var(--foreground); }
+.deletion-confirm-check { display: flex; align-items: flex-start; gap: 10px; font-size: 12px; color: var(--muted-foreground); cursor: pointer; line-height: 1.4; margin-top: 6px; }
+.deletion-confirm-check input[type="checkbox"] { margin-top: 2px; accent-color: #c53030; }
+.deletion-dialog-actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 8px; }
+
 .create-layout { display: grid; grid-template-columns: 205px minmax(0, 1fr) 270px; gap: 35px; padding-top: 38px; padding-bottom: 30px; align-items: start; }
 .create-story { min-width: 0; }
 .back-link { display: inline-flex; align-items: center; gap: 11px; font-size: 12px; color: var(--muted-foreground); text-decoration: none; min-height: 40px; margin-bottom: 35px; }
@@ -187,7 +206,6 @@
 .review-details dd { margin: 0; overflow-wrap: anywhere; }
 .review-description { white-space: pre-wrap; }
 .moderation-note { display: flex; gap: 13px; align-items: flex-start; padding: 18px; background: #e9eddf; border-radius: 7px; margin-top: 23px; font-size: 12px; color: #4c5943; }
-.step-content .verification-notice { margin-top: 20px; }
 .submission-result { max-width: 650px; padding: 80px 25px; margin: auto; min-height: 72vh; display: flex; flex-direction: column; align-items: flex-start; gap: 23px; }
 .submission-result > svg { color: var(--success); }
 .result-rejected > svg { color: var(--destructive); }
