@@ -151,9 +151,12 @@ REFRESH_TOKEN_EXPIRE_DAYS=7
 ALLOWED_EMAIL_DOMAINS=msrit.edu
 
 # AWS S3 Storage
+# Note: EC2 IAM instance role (ramaiahmart-ec2-role) automatically provides
+# temporary AWS credentials to boto3. Permanent AWS access keys (AWS_ACCESS_KEY_ID /
+# AWS_SECRET_ACCESS_KEY) must NOT be configured in .env.production.
 S3_BUCKET_NAME=ramaiahmart-media-production
 AWS_REGION=ap-south-1
-# Leave S3_ENDPOINT_URL empty in production to use AWS S3 SDK
+# Leave S3_ENDPOINT_URL empty in production to use standard AWS S3 SDK endpoints
 S3_ENDPOINT_URL=
 S3_PUBLIC_ENDPOINT_URL=
 
@@ -172,7 +175,7 @@ The production Compose configuration runs:
 1. `api`: Container running FastAPI behind Uvicorn. Exposes port 8000 only to the internal bridge network (`ramaiahmart_prod_net`).
 2. `nginx`: Public-facing reverse proxy binding host ports 80 and 443, terminating TLS, rate limiting by IP/route, and forwarding requests to `api:8000`.
 
-PostgreSQL and S3 are managed services (AWS RDS and AWS S3) external to the EC2 container stack.
+PostgreSQL and S3 are managed services (AWS RDS and AWS S3) external to the EC2 container stack. S3 access from the FastAPI backend uses the EC2 instance's attached IAM role (`ramaiahmart-ec2-role`) via boto3's default credential provider chain, providing temporary credentials with least privilege and eliminating the need for long-lived AWS access keys.
 
 ---
 
