@@ -5,7 +5,7 @@ import { useId, type ComponentProps, type ReactNode } from "react";
 
 export type InputProps = ComponentProps<"input"> & {
   label: string;
-  hint?: string;
+  hint?: ReactNode;
   error?: string;
   leadingIcon?: ReactNode;
 };
