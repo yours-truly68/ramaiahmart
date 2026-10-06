@@ -188,5 +188,8 @@ def test_production_jwt_secret_validation():
         APP_ENV="production",
         JWT_SECRET_KEY="a" * 32,
         DEBUG=False,
+        DATABASE_URL="postgresql+psycopg://produser:prodpass123@prod-db.internal:5432/ramaiahmart",
+        AWS_ACCESS_KEY_ID="prod-aws-key-id",
+        AWS_SECRET_ACCESS_KEY="prod-aws-secret-access-key",
     )
     assert valid.APP_ENV == "production"

@@ -35,7 +35,20 @@ def mock_storage_service():
     mock.build_safe_storage_key.side_effect = mock_build_key
     mock.generate_upload_url.side_effect = mock_upload_url
     mock.generate_download_url.side_effect = mock_download_url
+
+    def mock_get_header(storage_key: str, max_bytes: int = 512) -> bytes:
+        if storage_key.endswith(".png"):
+            return b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR"
+        if storage_key.endswith(".webp"):
+            return b"RIFF\x00\x00\x00\x00WEBPVP8 "
+        return b"\xff\xd8\xff\xe0\x00\x10JFIF\x00"
+
     mock.object_exists.return_value = True
+    mock.get_object_metadata.return_value = {
+        "content_length": 1024,
+        "content_type": "image/jpeg",
+    }
+    mock.get_object_header.side_effect = mock_get_header
     mock.delete_object.return_value = None
 
     return mock
@@ -333,5 +346,72 @@ async def test_deleting_owned_media_and_unauthorized_deletion(test_setup, mock_s
             res_not_found = await client.delete(f"/api/v1/media/{media_id}", headers=headers_a)
             assert res_not_found.status_code == 404
             assert res_not_found.json()["error"]["code"] == "MEDIA_NOT_FOUND"
+    finally:
+        app.dependency_overrides.pop(get_storage_service, None)
+
+
+@pytest.mark.asyncio
+async def test_media_upload_spoofed_mime_and_size_enforcement(test_setup, mock_storage_service):
+    """Verify that spoofed MIME, empty files, and oversized files are rejected and cleaned up."""
+    app.dependency_overrides[get_storage_service] = lambda: mock_storage_service
+    try:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            headers = {"Authorization": f"Bearer {test_setup['token_a']}"}
+            post_id = test_setup["post"].id
+
+            # 1. Spoofed MIME: client uploaded an executable shell script disguised as a .jpg
+            bad_key_spoofed = f"posts/{post_id}/{uuid.uuid4()}.jpg"
+            mock_storage_service.get_object_metadata.return_value = {
+                "content_length": 1024,
+                "content_type": "image/jpeg",
+            }
+            fake_script = b"#!/bin/bash\necho 'malicious script'"
+            mock_storage_service.get_object_header.side_effect = lambda *a, **k: fake_script
+            mock_storage_service.delete_object.reset_mock()
+
+            res_spoofed = await client.post(
+                "/api/v1/media/complete",
+                json={"post_id": str(post_id), "storage_key": bad_key_spoofed},
+                headers=headers,
+            )
+            assert res_spoofed.status_code == 400
+            assert res_spoofed.json()["error"]["code"] == "INVALID_FILE_SIGNATURE"
+            mock_storage_service.delete_object.assert_called_with(bad_key_spoofed)
+
+            # 2. Oversized file: actual file size in object store exceeds 10 MB limit
+            bad_key_oversized = f"posts/{post_id}/{uuid.uuid4()}.jpg"
+            mock_storage_service.get_object_metadata.return_value = {
+                "content_length": 15 * 1024 * 1024,  # 15 MB
+                "content_type": "image/jpeg",
+            }
+            jpeg_hdr = b"\xff\xd8\xff\xe0\x00\x10JFIF\x00"
+            mock_storage_service.get_object_header.side_effect = lambda *a, **k: jpeg_hdr
+            mock_storage_service.delete_object.reset_mock()
+
+            res_oversized = await client.post(
+                "/api/v1/media/complete",
+                json={"post_id": str(post_id), "storage_key": bad_key_oversized},
+                headers=headers,
+            )
+            assert res_oversized.status_code == 400
+            assert res_oversized.json()["error"]["code"] == "FILE_TOO_LARGE"
+            mock_storage_service.delete_object.assert_called_with(bad_key_oversized)
+
+            # 3. Empty file: 0 bytes uploaded
+            bad_key_empty = f"posts/{post_id}/{uuid.uuid4()}.jpg"
+            mock_storage_service.get_object_metadata.return_value = {
+                "content_length": 0,
+                "content_type": "image/jpeg",
+            }
+            mock_storage_service.delete_object.reset_mock()
+
+            res_empty = await client.post(
+                "/api/v1/media/complete",
+                json={"post_id": str(post_id), "storage_key": bad_key_empty},
+                headers=headers,
+            )
+            assert res_empty.status_code == 400
+            assert res_empty.json()["error"]["code"] == "INVALID_FILE_SIZE"
+            mock_storage_service.delete_object.assert_called_with(bad_key_empty)
     finally:
         app.dependency_overrides.pop(get_storage_service, None)
