@@ -3,7 +3,7 @@
 import { useState, type FormEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowRight,
@@ -22,10 +22,10 @@ import type { AuthConfig } from "@/lib/api/types";
 import { safeNext } from "@/lib/auth/session";
 import { Button, Input } from "@/components/ui";
 import { SiteHeader, SiteFooter } from "@/components/marketplace/site-header";
+import { LoginTransition } from "./login-transition";
 
 export default function AuthPage({ mode }: { mode: "login" | "register" }) {
   const registration = mode === "register";
-  const router = useRouter();
   const params = useSearchParams();
   const client = useQueryClient();
   const next = safeNext(params.get("next"));
@@ -42,6 +42,7 @@ export default function AuthPage({ mode }: { mode: "login" | "register" }) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
+  const [loggingIn, setLoggingIn] = useState(false);
   const [validation, setValidation] = useState("");
 
   const config = useQuery({
@@ -59,10 +60,10 @@ export default function AuthPage({ mode }: { mode: "login" | "register" }) {
       if (registration) {
         setRegisteredEmail(data.email);
       } else {
+        setLoggingIn(true);
         client.removeQueries({ queryKey: ["my-posts"] });
         client.removeQueries({ queryKey: ["my-stats"] });
         await client.invalidateQueries({ queryKey: ["me"] });
-        router.replace(next);
       }
     },
   });
@@ -145,6 +146,7 @@ export default function AuthPage({ mode }: { mode: "login" | "register" }) {
 
   return (
     <>
+      {loggingIn && <LoginTransition destination={next} email={email} />}
       <SiteHeader auth={mode} />
       <main id="main" className={`auth-page rm-container auth-page--${mode}`}>
         <section className="auth-story">
