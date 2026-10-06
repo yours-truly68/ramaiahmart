@@ -1,8 +1,9 @@
 import uuid
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy import func, or_, select, update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.api.deps import get_current_user
@@ -179,10 +180,24 @@ def create_or_get_conversation(
     )
     db.add(new_conversation)
     record_user_activity(current_user, db, commit=False)
-    db.commit()
-    db.refresh(new_conversation)
+    try:
+        db.commit()
+        db.refresh(new_conversation)
+        conv_to_return = new_conversation
+    except IntegrityError:
+        db.rollback()
+        # Fetch the existing conversation that won the concurrent creation race
+        existing = db.scalar(
+            select(Conversation).where(
+                Conversation.post_id == post.id,
+                Conversation.initiator_id == current_user.id,
+            )
+        )
+        if existing is None:
+            raise
+        conv_to_return = existing
 
-    loaded = _load_conversation_by_id(new_conversation.id, db)
+    loaded = _load_conversation_by_id(conv_to_return.id, db)
     assert loaded is not None
     return _build_conversation_response(loaded, current_user.id)
 
@@ -193,10 +208,18 @@ def create_or_get_conversation(
     summary="List all conversations for authenticated user",
 )
 def list_conversations(
+    limit: int = Query(default=50, ge=1, le=100, description="Max conversations to return"),
+    offset: int = Query(default=0, ge=0, description="Number of conversations to skip"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> ConversationListResponse:
-    """Retrieve all conversations where the user is initiator or owner."""
+    """Retrieve conversations where the user is initiator or owner with pagination."""
+    filter_cond = or_(
+        Conversation.initiator_id == current_user.id,
+        Conversation.owner_id == current_user.id,
+    )
+    total_count = db.scalar(select(func.count(Conversation.id)).where(filter_cond)) or 0
+
     rows = db.scalars(
         select(Conversation)
         .options(
@@ -206,16 +229,13 @@ def list_conversations(
             joinedload(Conversation.owner),
             selectinload(Conversation.messages),
         )
-        .where(
-            or_(
-                Conversation.initiator_id == current_user.id,
-                Conversation.owner_id == current_user.id,
-            )
-        )
+        .where(filter_cond)
         .order_by(
             func.coalesce(Conversation.last_message_at, Conversation.created_at).desc(),
             Conversation.id.desc(),
         )
+        .offset(offset)
+        .limit(limit)
     ).all()
 
     items = [_build_conversation_response(c, current_user.id) for c in rows]
@@ -223,7 +243,7 @@ def list_conversations(
 
     return ConversationListResponse(
         items=items,
-        total=len(items),
+        total=total_count,
         unread_total=unread_total,
     )
 
@@ -264,6 +284,8 @@ def get_conversation(
 )
 def list_messages(
     conversation_id: uuid.UUID,
+    limit: int = Query(default=100, ge=1, le=200, description="Max messages to return"),
+    offset: int = Query(default=0, ge=0, description="Number of messages to skip"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> list[MessageResponse]:
@@ -297,11 +319,13 @@ def list_messages(
     record_user_activity(current_user, db, commit=False)
     db.commit()
 
-    # Fetch ordered messages
+    # Fetch ordered messages with pagination
     messages = db.scalars(
         select(Message)
         .where(Message.conversation_id == conversation.id)
         .order_by(Message.created_at.asc(), Message.id.asc())
+        .offset(offset)
+        .limit(limit)
     ).all()
 
     return [MessageResponse.model_validate(m) for m in messages]
