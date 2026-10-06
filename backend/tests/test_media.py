@@ -47,14 +47,14 @@ def test_setup():
     db = SessionLocal()
     try:
         user_a = User(
-            email=f"media_user_a_{uuid.uuid4().hex[:8]}@ramaiah.edu",
+            email=f"media_user_a_{uuid.uuid4().hex[:8]}@msrit.edu",
             name="Media Student A",
             hashed_password="test_hashed_password_123",
             university_verified=True,
             is_active=True,
         )
         user_b = User(
-            email=f"media_user_b_{uuid.uuid4().hex[:8]}@ramaiah.edu",
+            email=f"media_user_b_{uuid.uuid4().hex[:8]}@msrit.edu",
             name="Media Student B",
             hashed_password="test_hashed_password_123",
             university_verified=True,

@@ -2,7 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, MessageSquare, Pencil, Trash2, XCircle } from "lucide-react";
+import { MessageSquare, Pencil, Trash2, XCircle } from "lucide-react";
 import { api, ApiError, errorMessage } from "@/lib/api/client";
 import { useSession } from "@/lib/auth/session";
 import type { Post } from "@/lib/api/types";
@@ -43,7 +43,7 @@ export function DetailPanel({ id, onClose }: { id: string; onClose: () => void }
       <ListingImage post={query.data} detail /><div className="detail-kicker"><Badge tone={query.data.type === "OFFER" ? "offer" : "request"}>{query.data.type}</Badge><StatusBadge status={query.data.status} /><span>{query.data.category.name}</span></div>
       <h3>{query.data.title}</h3><p className="detail-price">{priceLabel(query.data)} <small>{query.data.price_unit}{query.data.type === "REQUEST" && query.data.price !== null ? " · budget" : ""}</small></p>
       <p className="post-description">{query.data.description}</p>
-      <div className="post-author"><strong>{query.data.author.name}</strong>{query.data.author.university_verified && <span><CheckCircle2 size={15} aria-hidden="true" /> Verified Ramaiah student</span>}<time dateTime={query.data.created_at}>{relativeTime(query.data.created_at)}</time></div>
+      <div className="post-author"><strong>{query.data.author.name}</strong><time dateTime={query.data.created_at}>{relativeTime(query.data.created_at)}</time></div>
 
       {isOwner ? (
         <div className="detail-owner-actions" style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginTop: "20px", paddingTop: "16px", borderTop: "1px solid var(--border)" }}>

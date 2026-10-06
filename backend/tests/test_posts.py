@@ -43,7 +43,7 @@ async def test_posts_creation_and_validation(test_category: Category) -> None:
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
         # 1. Register and login student
-        email = f"seller_{uuid.uuid4().hex[:8]}@ramaiah.edu"
+        email = f"seller_{uuid.uuid4().hex[:8]}@msrit.edu"
         await client.post(
             "/api/v1/auth/register",
             json={
@@ -124,7 +124,7 @@ async def test_posts_authorization_updates_and_deletion(test_category: Category)
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
         # Register user A (Author)
-        email_a = f"author_{uuid.uuid4().hex[:8]}@ramaiah.edu"
+        email_a = f"author_{uuid.uuid4().hex[:8]}@msrit.edu"
         await client.post(
             "/api/v1/auth/register",
             json={
@@ -142,7 +142,7 @@ async def test_posts_authorization_updates_and_deletion(test_category: Category)
         headers_a = {"Authorization": f"Bearer {login_a.json()['access_token']}"}
 
         # Register user B (Stranger)
-        email_b = f"stranger_{uuid.uuid4().hex[:8]}@ramaiah.edu"
+        email_b = f"stranger_{uuid.uuid4().hex[:8]}@msrit.edu"
         await client.post(
             "/api/v1/auth/register",
             json={
@@ -212,7 +212,7 @@ async def test_public_feed_filtering_and_pagination(test_category: Category) -> 
     session = SessionLocal()
     # Create test author
     author = User(
-        email=f"feed_author_{uuid.uuid4().hex[:8]}@ramaiah.edu",
+        email=f"feed_author_{uuid.uuid4().hex[:8]}@msrit.edu",
         name="Feed Author",
         hashed_password="hashed_pw",
         university_verified=True,
@@ -292,23 +292,24 @@ async def test_public_feed_filtering_and_pagination(test_category: Category) -> 
 
 @pytest.mark.asyncio
 async def test_publish_flow_and_moderation_transition(test_category: Category) -> None:
-    """Verify DRAFT -> PENDING_REVIEW transition via publish endpoint."""
+    """Verify DRAFT -> PUBLISHED transition via publish endpoint without any verification gate."""
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
-        email = f"verified_publisher_{uuid.uuid4().hex[:8]}@ramaiah.edu"
+        email = f"publisher_{uuid.uuid4().hex[:8]}@msrit.edu"
         reg_res = await client.post(
             "/api/v1/auth/register",
             json={
                 "email": email,
                 "password": "Password123!",
-                "name": "Verified Student",
+                "name": "Campus Publisher",
                 "accepted_terms": True,
                 "accepted_privacy": True,
             },
         )
-        code = reg_res.json()["verification_code"]
+        assert reg_res.status_code == 201
 
-        # Attempt to publish before email verification should fail
+        # Registration with a valid @msrit.edu email is sufficient: no OTP, no
+        # email-verification step, no university_verified deadlock.
         login_res = await client.post(
             "/api/v1/auth/login",
             json={"email": email, "password": "Password123!"},
@@ -328,14 +329,7 @@ async def test_publish_flow_and_moderation_transition(test_category: Category) -
         )
         post_id = post_res.json()["id"]
 
-        unverified_pub = await client.post(f"/api/v1/posts/{post_id}/publish", headers=headers)
-        assert unverified_pub.status_code == 403
-        assert unverified_pub.json()["error"]["code"] == "FORBIDDEN_UNVERIFIED"
-
-        # Now verify student email
-        await client.post("/api/v1/auth/verify", json={"email": email, "code": code})
-
-        # Publishing now succeeds: moderation approves clean listing -> PUBLISHED
+        # Publishing succeeds right after registration: moderation approves clean listing
         pub_res = await client.post(f"/api/v1/posts/{post_id}/publish", headers=headers)
         assert pub_res.status_code == 200
         assert pub_res.json()["status"] == "PUBLISHED"

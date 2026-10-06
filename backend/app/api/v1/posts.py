@@ -20,6 +20,7 @@ from app.schemas.post import (
     PostResponse,
     PostUpdateRequest,
 )
+from app.services.lifecycle import record_user_activity
 from app.services.moderation import ModerationService
 
 router = APIRouter(prefix="/posts", tags=["Posts"])
@@ -61,6 +62,7 @@ def create_post(
         status=PostStatus.DRAFT,
     )
     db.add(post)
+    record_user_activity(current_user, db, commit=False)
     db.commit()
     db.refresh(post)
 
@@ -255,6 +257,7 @@ def update_post(
     if "price_unit" in data.model_fields_set:
         post.price_unit = data.price_unit.strip() if data.price_unit else None
 
+    record_user_activity(current_user, db, commit=False)
     db.commit()
     db.refresh(post)
 
@@ -288,6 +291,7 @@ def delete_post(
         )
 
     db.delete(post)
+    record_user_activity(current_user, db, commit=False)
     db.commit()
 
     return MessageResponse(message="Post deleted successfully.")
@@ -306,17 +310,11 @@ def publish_post(
 ) -> PostResponse:
     """Submit post for publication.
 
-    Requires university verification. Evaluates post through moderation service.
-    Transitions DRAFT/REJECTED -> PUBLISHED (if approved), PENDING_REVIEW (if review),
-    or REJECTED (if rejected/prohibited).
+    V1 policy: any authenticated account with a valid @msrit.edu email may
+    publish; there is no email-verification gate. Evaluates the post through
+    the moderation service. Transitions DRAFT/REJECTED -> PUBLISHED (if approved),
+    PENDING_REVIEW (if review), or REJECTED (if rejected/prohibited).
     """
-    if not current_user.university_verified:
-        raise AppException(
-            code="FORBIDDEN_UNVERIFIED",
-            message="University email verification is required to publish a post.",
-            status_code=status.HTTP_403_FORBIDDEN,
-        )
-
     post = db.scalar(
         select(Post)
         .options(
@@ -349,6 +347,7 @@ def publish_post(
 
     # Route through moderation service boundary
     post = moderation_service.process_post_publication(post, db)
+    record_user_activity(current_user, db, commit=True)
 
     return PostResponse.model_validate(post)
 
@@ -388,6 +387,7 @@ def close_post(
         )
 
     post.status = PostStatus.CLOSED
+    record_user_activity(current_user, db, commit=False)
     db.commit()
     db.refresh(post)
 

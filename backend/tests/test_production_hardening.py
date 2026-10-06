@@ -23,14 +23,14 @@ def hardening_setup():
     db = SessionLocal()
     try:
         owner = User(
-            email=f"owner_hard_{uuid.uuid4().hex[:8]}@ramaiah.edu",
+            email=f"owner_hard_{uuid.uuid4().hex[:8]}@msrit.edu",
             name="Hardening Owner",
             hashed_password="hashed_pw_test_123",
             university_verified=True,
             is_active=True,
         )
         buyer = User(
-            email=f"buyer_hard_{uuid.uuid4().hex[:8]}@ramaiah.edu",
+            email=f"buyer_hard_{uuid.uuid4().hex[:8]}@msrit.edu",
             name="Hardening Buyer",
             hashed_password="hashed_pw_test_123",
             university_verified=True,
@@ -171,7 +171,7 @@ async def test_database_rollback_on_session_error():
         # Add an invalid object or trigger exception
         session.add(
             User(
-                email="will_fail_rollback@ramaiah.edu",
+                email="will_fail_rollback@msrit.edu",
                 name="Rollback Test",
                 hashed_password=None,  # Not null violation
             )
@@ -188,7 +188,7 @@ async def test_database_rollback_on_session_error():
     check_session = SessionLocal()
     try:
         user = check_session.scalar(
-            select(User).where(User.email == "will_fail_rollback@ramaiah.edu")
+            select(User).where(User.email == "will_fail_rollback@msrit.edu")
         )
         assert user is None
     finally:

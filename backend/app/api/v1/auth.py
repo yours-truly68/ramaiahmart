@@ -12,13 +12,12 @@ from app.core.security import (
     create_access_token,
     create_refresh_token,
     decode_token,
-    generate_verification_code,
     hash_password,
     hash_token,
     verify_password,
 )
 from app.db.session import get_db
-from app.models.auth import EmailVerificationCode, RefreshToken
+from app.models.auth import RefreshToken
 from app.models.user import User
 from app.schemas.auth import (
     LoginRequest,
@@ -27,12 +26,10 @@ from app.schemas.auth import (
     RefreshRequest,
     RegisterRequest,
     RegisterResponse,
-    ResendVerificationRequest,
     TokenResponse,
-    VerifyRequest,
-    VerifyResponse,
 )
 from app.services.legal import get_current_legal_document, record_user_consent
+from app.services.lifecycle import record_user_activity
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -48,7 +45,12 @@ def register(
     request: Request,
     db: Session = Depends(get_db),
 ) -> RegisterResponse:
-    """Register a new student with university domain check and verification code.
+    """Register a new student with university domain check.
+
+    V1 policy: RamaiahMart does not send authentication emails. Registration
+    with a valid @msrit.edu address is sufficient to create and use an account;
+    no separate email-verification step exists. Passwords are hashed with bcrypt
+    and never stored, logged, or returned in plaintext.
 
     Enforces IP-based rate limiting designed for university NATs.
     """
@@ -60,7 +62,7 @@ def register(
     if not settings.is_university_email(email_clean):
         raise AppException(
             code="INVALID_UNIVERSITY_EMAIL",
-            message="Registration is restricted to authorized university email domains.",
+            message="Registration is restricted to @msrit.edu email addresses.",
             status_code=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -85,21 +87,14 @@ def register(
         email=email_clean,
         name=data.name.strip(),
         hashed_password=hashed_pw,
-        university_verified=False,
+        # V1: a valid @msrit.edu registration is sufficient. The column is kept
+        # for a future automated email-verification migration, but it never
+        # blocks normal V1 operation.
+        university_verified=True,
         is_active=True,
     )
     db.add(user)
     db.flush()
-
-    # Generate verification OTP
-    code = generate_verification_code()
-    expires_at = datetime.now(UTC) + timedelta(minutes=settings.EMAIL_VERIFICATION_EXPIRE_MINUTES)
-    verification = EmailVerificationCode(
-        user_id=user.id,
-        code=code,
-        expires_at=expires_at,
-    )
-    db.add(verification)
 
     # Server-side determination of active legal document versions
     terms_doc = get_current_legal_document(db, "TERMS")
@@ -125,145 +120,9 @@ def register(
 
     db.commit()
 
-    # In dev/test return verification code in payload for automated/local testing
-    expose_code = code if (settings.DEBUG or settings.APP_ENV != "production") else None
-
     return RegisterResponse(
-        message="Registration successful. Please verify your university email.",
+        message="Registration successful. You can log in with your @msrit.edu account.",
         email=user.email,
-        verification_code=expose_code,
-    )
-
-
-@router.post(
-    "/verify",
-    response_model=VerifyResponse,
-    summary="Verify university email",
-)
-def verify(
-    data: VerifyRequest,
-    request: Request,
-    db: Session = Depends(get_db),
-) -> VerifyResponse:
-    """Verify university student email with provided OTP.
-
-    Protected by IP and email rate limiting. Limits verification cycle to max 5 attempts;
-    invalidates code upon exceeding maximum attempts without revealing account presence.
-    """
-    client_ip = get_client_ip(request)
-    email_clean = data.email.strip().lower()
-    rate_limiter.check_verify_rate_limit(client_ip, email_clean)
-
-    user = db.scalar(select(User).where(User.email == email_clean))
-    if user is None:
-        raise AppException(
-            code="INVALID_OR_EXPIRED_CODE",
-            message="Verification code is invalid or has expired.",
-            status_code=status.HTTP_400_BAD_REQUEST,
-        )
-
-    now = datetime.now(UTC)
-    stmt = (
-        select(EmailVerificationCode)
-        .where(
-            EmailVerificationCode.user_id == user.id,
-            EmailVerificationCode.used_at.is_(None),
-            EmailVerificationCode.expires_at > now,
-        )
-        .order_by(EmailVerificationCode.created_at.desc())
-    )
-    verification = db.scalar(stmt)
-    if verification is None:
-        raise AppException(
-            code="INVALID_OR_EXPIRED_CODE",
-            message="Verification code is invalid or has expired.",
-            status_code=status.HTTP_400_BAD_REQUEST,
-        )
-
-    # Track attempts on this specific verification code cycle
-    attempts = rate_limiter.increment_otp_attempts(str(verification.id))
-
-    if attempts > 5:
-        # Invalidate the OTP in the database
-        verification.used_at = now
-        db.commit()
-        raise AppException(
-            code="MAX_ATTEMPTS_EXCEEDED",
-            message=(
-                "Maximum verification attempts exceeded. "
-                "This verification code has been invalidated. Please request a new code."
-            ),
-            status_code=status.HTTP_400_BAD_REQUEST,
-        )
-
-    if verification.code != data.code.strip():
-        if attempts == 5:
-            # 5th failed attempt invalidates the code
-            verification.used_at = now
-            db.commit()
-            raise AppException(
-                code="MAX_ATTEMPTS_EXCEEDED",
-                message=(
-                    "Maximum verification attempts exceeded. "
-                    "This verification code has been invalidated. Please request a new code."
-                ),
-                status_code=status.HTTP_400_BAD_REQUEST,
-            )
-        raise AppException(
-            code="INVALID_OR_EXPIRED_CODE",
-            message="Verification code is invalid or has expired.",
-            status_code=status.HTTP_400_BAD_REQUEST,
-        )
-
-    # Correct code provided
-    verification.used_at = now
-    user.university_verified = True
-    db.commit()
-    rate_limiter.reset_otp_attempts(str(verification.id))
-
-    return VerifyResponse(
-        message="University email verified successfully.",
-        university_verified=True,
-    )
-
-
-@router.post(
-    "/resend-verification",
-    response_model=MessageResponse,
-    summary="Resend verification OTP",
-)
-def resend_verification(
-    data: ResendVerificationRequest,
-    request: Request,
-    db: Session = Depends(get_db),
-) -> MessageResponse:
-    """Request a fresh university email verification code.
-
-    Enforces a 60-second cooldown and hourly limits per IP and account.
-    Returns generic response to prevent account enumeration.
-    """
-    client_ip = get_client_ip(request)
-    email_clean = data.email.strip().lower()
-    rate_limiter.check_resend_rate_limit(client_ip, email_clean)
-
-    user = db.scalar(select(User).where(User.email == email_clean))
-    if user and not user.university_verified:
-        code = generate_verification_code()
-        delta = timedelta(minutes=settings.EMAIL_VERIFICATION_EXPIRE_MINUTES)
-        expires_at = datetime.now(UTC) + delta
-        verification = EmailVerificationCode(
-            user_id=user.id,
-            code=code,
-            expires_at=expires_at,
-        )
-        db.add(verification)
-        db.commit()
-
-    return MessageResponse(
-        message=(
-            "If this account exists and is unverified, "
-            "a new verification code has been dispatched."
-        )
     )
 
 
@@ -280,6 +139,8 @@ def login(
     """Authenticate student user and return short-lived access and long-lived refresh tokens.
 
     Protected against brute force via IP and account-level failure tracking.
+    A successful login during the deletion grace period automatically cancels
+    the pending deletion (counts as meaningful activity).
     """
     client_ip = get_client_ip(request)
     email_clean = data.email.strip().lower()
@@ -305,11 +166,15 @@ def login(
     # Successful authentication resets the failure count for this email
     rate_limiter.record_login_success(email_clean)
 
+    now = datetime.now(UTC)
+    user.last_login_at = now
+    # Meaningful activity: reactivates INACTIVE accounts and cancels pending deletion.
+    record_user_activity(user, db, commit=False)
+
     access_token = create_access_token(user.id)
     refresh_token = create_refresh_token(user.id)
 
     # Persist refresh token hash
-    now = datetime.now(UTC)
     expires_at = now + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     db_refresh = RefreshToken(
         user_id=user.id,
@@ -337,7 +202,11 @@ def refresh(
     request: Request,
     db: Session = Depends(get_db),
 ) -> TokenResponse:
-    """Exchange valid revocable refresh token for fresh access token."""
+    """Exchange valid revocable refresh token for fresh access token.
+
+    Token refresh is NOT meaningful activity: it never updates last_activity_at,
+    never reactivates INACTIVE accounts, and never cancels pending deletions.
+    """
     client_ip = get_client_ip(request)
     token_hash = hash_token(data.refresh_token)
     rate_limiter.check_refresh_rate_limit(client_ip, token_hash)
@@ -416,6 +285,4 @@ def auth_config() -> dict:
     return {
         "allowed_email_domains": settings.ALLOWED_EMAIL_DOMAINS,
         "password_min_length": 8,
-        "verification_code_available": settings.DEBUG or settings.APP_ENV != "production",
-        "email_delivery_available": False,
     }

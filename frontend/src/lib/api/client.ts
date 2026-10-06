@@ -15,10 +15,8 @@ export function errorMessage(error: unknown): string {
   const messages: Record<string, string> = {
     INVALID_CREDENTIALS: "That email and password don’t match. Please try again.",
     EMAIL_ALREADY_EXISTS: "There’s already an account with this email. Try logging in.",
-    INVALID_UNIVERSITY_EMAIL: "Use an email from one of the supported university domains.",
-    INVALID_OR_EXPIRED_CODE: "That code is incorrect or has expired. Please check your code.",
-    FORBIDDEN_UNVERIFIED: "Verify your university email before submitting your post.",
-    USER_INACTIVE: "This account is inactive. You can’t continue with this account.",
+    INVALID_UNIVERSITY_EMAIL: "Registration is restricted to @msrit.edu email addresses.",
+    USER_INACTIVE: "This account can’t be used right now. Contact support if you think this is a mistake.",
     VALIDATION_ERROR: "Please check the fields and try again.",
     CATEGORY_NOT_FOUND: "That category is no longer available. Choose another category.",
     POST_NOT_FOUND: "This post is no longer available.",

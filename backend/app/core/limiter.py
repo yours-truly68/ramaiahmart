@@ -197,69 +197,7 @@ class RateLimiter:
         if not allowed:
             self._rate_limit_exceeded(retry_after=retry_after)
 
-    # 3. OTP Verification Rate Limiting Policy
-    # IP limit: 25 attempts per 15 minutes
-    # Email limit: 5 attempts per 15 minutes
-    def check_verify_rate_limit(self, client_ip: str, email: str) -> None:
-        allowed_ip, retry_ip = self.storage.check_and_record(
-            key=f"verify:ip:{client_ip}",
-            limit=25,
-            window_seconds=900,
-        )
-        if not allowed_ip:
-            self._rate_limit_exceeded(retry_after=retry_ip)
-
-        allowed_email, retry_email = self.storage.check_and_record(
-            key=f"verify:email:{email.lower().strip()}",
-            limit=10,
-            window_seconds=900,
-        )
-        if not allowed_email:
-            self._rate_limit_exceeded(retry_after=retry_email)
-
-    def increment_otp_attempts(self, verification_id: str) -> int:
-        return self.storage.increment_attempts(
-            f"otp_attempts:{verification_id}",
-            window_seconds=3600,
-        )
-
-    def reset_otp_attempts(self, verification_id: str) -> None:
-        self.storage.reset(f"otp_attempts:{verification_id}")
-
-    # 4. OTP Resend Verification Policy (Prepared)
-    # Cooldown: 60 seconds minimum between resends per email
-    # Hourly limit: 5 resends per hour per email, 15 per hour per IP
-    def check_resend_rate_limit(self, client_ip: str, email: str) -> None:
-        clean_email = email.lower().strip()
-
-        # Cooldown check: 1 per 60 seconds
-        allowed_cooldown, retry_cooldown = self.storage.check_and_record(
-            key=f"resend_cooldown:email:{clean_email}",
-            limit=1,
-            window_seconds=60,
-        )
-        if not allowed_cooldown:
-            self._rate_limit_exceeded(retry_after=retry_cooldown)
-
-        # Hourly limit per email
-        allowed_email, retry_email = self.storage.check_and_record(
-            key=f"resend_hourly:email:{clean_email}",
-            limit=5,
-            window_seconds=3600,
-        )
-        if not allowed_email:
-            self._rate_limit_exceeded(retry_after=retry_email)
-
-        # Hourly limit per IP
-        allowed_ip, retry_ip = self.storage.check_and_record(
-            key=f"resend_hourly:ip:{client_ip}",
-            limit=15,
-            window_seconds=3600,
-        )
-        if not allowed_ip:
-            self._rate_limit_exceeded(retry_after=retry_ip)
-
-    # 5. Token Refresh Rate Limiting Policy
+    # 3. Token Refresh Rate Limiting Policy
     # Session / IP limit: 60 requests per minute
     def check_refresh_rate_limit(self, client_ip: str, token_hash: str) -> None:
         allowed, retry_after = self.storage.check_and_record(

@@ -95,8 +95,3 @@ def decode_token(token: str) -> dict[str, Any]:
 def hash_token(token: str) -> str:
     """Produce SHA-256 hash of token for lookup/revocation."""
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
-
-
-def generate_verification_code() -> str:
-    """Generate secure 6-digit numeric verification OTP."""
-    return f"{secrets.randbelow(900000) + 100000}"

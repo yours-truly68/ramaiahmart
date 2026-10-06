@@ -24,7 +24,7 @@ def moderation_setup():
     db = SessionLocal()
     try:
         user = User(
-            email=f"mod_user_{uuid.uuid4().hex[:8]}@ramaiah.edu",
+            email=f"mod_user_{uuid.uuid4().hex[:8]}@msrit.edu",
             name="Moderation Tester",
             hashed_password="hashed_pw_test_123",
             university_verified=True,

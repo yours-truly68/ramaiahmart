@@ -127,7 +127,7 @@ def test_required_indexes_exist() -> None:
 def test_unique_constraint_on_user_email() -> None:
     """Verify unique constraint on user email."""
     session = SessionLocal()
-    unique_email = f"student_{uuid.uuid4().hex[:8]}@ramaiah.edu"
+    unique_email = f"student_{uuid.uuid4().hex[:8]}@msrit.edu"
 
     try:
         user1 = User(email=unique_email, name="Student One", hashed_password="pw1")
@@ -168,7 +168,7 @@ def test_conversation_initiator_not_owner_constraint() -> None:
 
     try:
         user = User(
-            email=f"owner_{uuid.uuid4().hex[:8]}@ramaiah.edu",
+            email=f"owner_{uuid.uuid4().hex[:8]}@msrit.edu",
             name="Owner",
             hashed_password="pw",
         )
@@ -208,12 +208,12 @@ def test_conversation_duplicate_initiator_constraint() -> None:
 
     try:
         owner = User(
-            email=f"owner_{uuid.uuid4().hex[:8]}@ramaiah.edu",
+            email=f"owner_{uuid.uuid4().hex[:8]}@msrit.edu",
             name="Owner",
             hashed_password="pw",
         )
         buyer = User(
-            email=f"buyer_{uuid.uuid4().hex[:8]}@ramaiah.edu",
+            email=f"buyer_{uuid.uuid4().hex[:8]}@msrit.edu",
             name="Buyer",
             hashed_password="pw",
         )

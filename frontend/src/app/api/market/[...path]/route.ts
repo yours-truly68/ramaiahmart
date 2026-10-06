@@ -45,7 +45,7 @@ async function proxy(
           path,
         ) || postPath
       : method === "POST"
-        ? /^(auth\/(login|register|verify|logout|resend-verification)|posts|media\/(upload-url|complete)|legal\/consent)$/.test(
+        ? /^(auth\/(login|register|logout)|posts|media\/(upload-url|complete)|legal\/consent|users\/me\/deletion-(request|cancel))$/.test(
             path,
           ) || new RegExp(`^posts/${uuid}/(publish|close)$`).test(path)
         : method === "PATCH"

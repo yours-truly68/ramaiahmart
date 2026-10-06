@@ -11,7 +11,7 @@ def test_private_inventory_stats_edit_and_request_budget_clear():
     client = TestClient(app)
     accounts = []
     for name in ("Inventory Owner", "Other Student"):
-        email = f"account-{uuid.uuid4().hex}@ramaiah.edu"
+        email = f"account-{uuid.uuid4().hex}@msrit.edu"
         registration = client.post(
             "/api/v1/auth/register",
             json={
@@ -82,7 +82,6 @@ def test_public_requirements_and_registration_bounds():
     client = TestClient(app)
     config = client.get("/api/v1/auth/config").json()
     assert config["password_min_length"] == 8
-    assert config["email_delivery_available"] is False
     assert "allowed_email_domains" in config
     media = client.get("/api/v1/media/config").json()
     assert media["max_file_size"] > 0
@@ -92,7 +91,7 @@ def test_public_requirements_and_registration_bounds():
             "/api/v1/auth/register",
             json={
                 "name": "Test Student",
-                "email": f"{uuid.uuid4()}@ramaiah.edu",
+                "email": f"{uuid.uuid4()}@msrit.edu",
                 "password": "é" * 40,
             },
         ).status_code

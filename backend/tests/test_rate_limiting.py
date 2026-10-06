@@ -2,7 +2,6 @@ import uuid
 
 import pytest
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import select
 
 from app.core.config import Settings
 from app.core.limiter import rate_limiter
@@ -10,7 +9,6 @@ from app.core.proxy import is_trusted_proxy
 from app.core.security import hash_password
 from app.db.session import SessionLocal
 from app.main import app
-from app.models.auth import EmailVerificationCode
 from app.models.user import User
 
 
@@ -147,105 +145,6 @@ async def test_registration_rate_limiting():
         assert resp_blocked.status_code == 429
         assert resp_blocked.json()["error"]["code"] == "RATE_LIMITED"
         assert "Retry-After" in resp_blocked.headers
-
-
-@pytest.mark.asyncio
-async def test_otp_verification_attempt_limit_and_invalidation():
-    """OTP code is invalidated after 5 failed attempts."""
-    email = f"verify_{uuid.uuid4().hex[:6]}@msrit.edu"
-
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
-        # Register user
-        reg = await client.post(
-            "/api/v1/auth/register",
-            json={
-                "email": email,
-                "password": "Password123!",
-                "name": "Verify Student",
-                "accepted_terms": True,
-                "accepted_privacy": True,
-            },
-        )
-        assert reg.status_code == 201
-        valid_code = reg.json()["verification_code"]
-        assert valid_code is not None
-
-        db = SessionLocal()
-        user = db.scalar(select(User).where(User.email == email))
-
-        # Send 4 incorrect attempts
-        for _ in range(4):
-            resp = await client.post(
-                "/api/v1/auth/verify",
-                json={"email": email, "code": "000000"},
-                headers={"X-Forwarded-For": "192.0.2.1"},
-            )
-            assert resp.status_code == 400
-            assert resp.json()["error"]["code"] == "INVALID_OR_EXPIRED_CODE"
-
-        # 5th incorrect attempt invalidates the OTP and returns MAX_ATTEMPTS_EXCEEDED
-        resp_5 = await client.post(
-            "/api/v1/auth/verify",
-            json={"email": email, "code": "000000"},
-            headers={"X-Forwarded-For": "192.0.2.1"},
-        )
-        assert resp_5.status_code == 400
-        assert resp_5.json()["error"]["code"] == "MAX_ATTEMPTS_EXCEEDED"
-
-        # Verify that in database, verification code is now marked used_at
-        db.expire_all()
-        db_code = db.scalar(
-            select(EmailVerificationCode).where(EmailVerificationCode.user_id == user.id)
-        )
-        assert db_code.used_at is not None
-        db.close()
-
-        # Even providing the correct code now fails because it was invalidated
-        resp_retry_correct = await client.post(
-            "/api/v1/auth/verify",
-            json={"email": email, "code": valid_code},
-            headers={"X-Forwarded-For": "192.0.2.1"},
-        )
-        assert resp_retry_correct.status_code == 400
-        assert resp_retry_correct.json()["error"]["code"] == "INVALID_OR_EXPIRED_CODE"
-
-
-@pytest.mark.asyncio
-async def test_resend_verification_cooldown_rate_limit():
-    """Resend verification enforces a 60-second cooldown."""
-    email = f"resend_{uuid.uuid4().hex[:6]}@msrit.edu"
-
-    # Create unverified user
-    db = SessionLocal()
-    user = User(
-        email=email,
-        name="Resend Student",
-        hashed_password=hash_password("Password123!"),
-        university_verified=False,
-        is_active=True,
-    )
-    db.add(user)
-    db.commit()
-    db.close()
-
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
-        # First resend succeeds
-        resp1 = await client.post(
-            "/api/v1/auth/resend-verification",
-            json={"email": email},
-            headers={"X-Forwarded-For": "198.51.100.80"},
-        )
-        assert resp1.status_code == 200
-
-        # Immediate second resend is rate limited by cooldown
-        resp2 = await client.post(
-            "/api/v1/auth/resend-verification",
-            json={"email": email},
-            headers={"X-Forwarded-For": "198.51.100.80"},
-        )
-        assert resp2.status_code == 429
-        assert resp2.json()["error"]["code"] == "RATE_LIMITED"
-        assert "Retry-After" in resp2.headers
 
 
 def test_trusted_proxy_client_ip_resolution():

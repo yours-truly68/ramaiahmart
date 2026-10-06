@@ -76,19 +76,6 @@ def get_current_user(
     return user
 
 
-def get_current_verified_user(
-    current_user: User = Depends(get_current_user),
-) -> User:
-    """Ensure user is authenticated and verified student."""
-    if not current_user.university_verified:
-        raise AppException(
-            code="FORBIDDEN_UNVERIFIED",
-            message="University email verification is required to perform this action.",
-            status_code=403,
-        )
-    return current_user
-
-
 def get_storage_service() -> "StorageService":
     """Dependency providing storage service instance."""
     from app.services.storage import storage_service

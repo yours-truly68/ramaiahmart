@@ -37,30 +37,6 @@ class RegisterResponse(BaseModel):
 
     message: str
     email: str
-    verification_code: str | None = Field(
-        default=None,
-        description="Verification OTP (provided for development convenience)",
-    )
-
-
-class VerifyRequest(BaseModel):
-    """University email verification input."""
-
-    email: str = Field(..., description="Registered email address")
-    code: str = Field(..., min_length=6, max_length=64, description="Verification OTP")
-
-
-class VerifyResponse(BaseModel):
-    """Verification outcome."""
-
-    message: str
-    university_verified: bool
-
-
-class ResendVerificationRequest(BaseModel):
-    """University email verification resend request."""
-
-    email: str = Field(..., description="Registered email address")
 
 
 class LoginRequest(BaseModel):

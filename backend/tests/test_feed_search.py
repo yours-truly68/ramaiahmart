@@ -21,7 +21,7 @@ def search_feed():
         category = Category(name="Search test", slug=f"search-{uuid.uuid4()}", is_active=True)
         author = User(
             name="Search tester",
-            email=f"{uuid.uuid4()}@ramaiah.edu",
+            email=f"{uuid.uuid4()}@msrit.edu",
             hashed_password="unused",
             university_verified=True,
         )

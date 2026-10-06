@@ -8,8 +8,6 @@ from app.schemas.auth import (
     RegisterRequest,
     RegisterResponse,
     TokenResponse,
-    VerifyRequest,
-    VerifyResponse,
 )
 from app.schemas.category import (
     CategoryCreateRequest,
@@ -53,6 +51,4 @@ __all__ = [
     "UploadUrlResponse",
     "UserResponse",
     "UserUpdateRequest",
-    "VerifyRequest",
-    "VerifyResponse",
 ]
