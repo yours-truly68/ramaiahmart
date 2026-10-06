@@ -92,9 +92,7 @@ class Settings(BaseSettings):
                     "Cannot use the default development secret."
                 )
             if len(self.JWT_SECRET_KEY) < 32:
-                raise ValueError(
-                    "JWT_SECRET_KEY must be at least 32 characters in production."
-                )
+                raise ValueError("JWT_SECRET_KEY must be at least 32 characters in production.")
             if self.DEBUG:
                 raise ValueError("DEBUG mode must be set to False in production.")
         return self

@@ -120,7 +120,6 @@ def delete_user_by_id(
     return request_account_deletion(user=current_user, db=db)
 
 
-
 @router.get("/me/posts", response_model=PostListResponse, summary="List all of my posts")
 def my_posts(
     type: PostType | None = Query(default=None),

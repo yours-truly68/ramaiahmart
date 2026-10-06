@@ -16,9 +16,7 @@ from app.core.errors import AppException
 class RateLimiterStorage(Protocol):
     """Storage protocol for rate limit counters and timestamps."""
 
-    def check_and_record(
-        self, key: str, limit: int, window_seconds: int
-    ) -> tuple[bool, int]:
+    def check_and_record(self, key: str, limit: int, window_seconds: int) -> tuple[bool, int]:
         """Check if request is allowed and record it.
 
         Returns:
@@ -77,9 +75,7 @@ class InMemoryRateLimiterStorage:
             if not self._failures[key]:
                 del self._failures[key]
 
-    def check_and_record(
-        self, key: str, limit: int, window_seconds: int
-    ) -> tuple[bool, int]:
+    def check_and_record(self, key: str, limit: int, window_seconds: int) -> tuple[bool, int]:
         now = time.time()
         cutoff = now - window_seconds
 

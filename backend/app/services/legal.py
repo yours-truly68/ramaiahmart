@@ -150,9 +150,7 @@ def get_user_consent_status(db: Session, user_id: uuid.UUID) -> UserConsentStatu
     terms_consent = next((c for c in user_consents if c.document_type == "TERMS"), None)
     privacy_consent = next((c for c in user_consents if c.document_type == "PRIVACY"), None)
 
-    terms_accepted = bool(
-        terms_consent and terms_consent.document_version == terms_current_version
-    )
+    terms_accepted = bool(terms_consent and terms_consent.document_version == terms_current_version)
     privacy_accepted = bool(
         privacy_consent and privacy_consent.document_version == privacy_current_version
     )

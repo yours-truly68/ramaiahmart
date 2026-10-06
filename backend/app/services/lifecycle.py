@@ -181,9 +181,7 @@ def process_permanent_deletions(
             try:
                 active_storage.delete_object(key)
             except Exception as e:
-                logger.warning(
-                    "Error deleting object key %s during user deletion: %s", key, e
-                )
+                logger.warning("Error deleting object key %s during user deletion: %s", key, e)
 
         # 3. Delete database user entity (cascades to all user records)
         db.delete(user)

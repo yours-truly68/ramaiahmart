@@ -649,3 +649,21 @@ Meaningful activity is tracked centrally via `record_user_activity(user, db)`:
 - **Authoritative Reconciliation:** The disaster recovery backup mirrors the current production database. Accounts permanently deleted in production are omitted from the next backup generation.
 - **Fault-Tolerant Promotion:** A new backup generation is verified before promotion; previous known-good backups remain intact if a backup cycle fails.
 
+---
+
+## 22. CI/CD & Production Deployment (Phase 6)
+
+Detailed deployment workflows and server setup procedures are maintained in [`docs/DEPLOYMENT.md`](DEPLOYMENT.md).
+
+### Pipeline Overview
+- **PR CI (`.github/workflows/ci.yml`):** Validates Ruff formatting/linting, Alembic migrations, Pytest suite (with PostgreSQL container), frontend lint/typecheck/build, and production Dockerfile builds.
+- **Production CD (`.github/workflows/deploy.yml`):**
+  1. Builds and tags production container with exact Git commit SHA: `ghcr.io/<owner>/ramaiahmart-api:<commit-sha>`.
+  2. Pushes immutable image to GitHub Container Registry (GHCR).
+  3. SSH into AWS EC2 host to pull the exact image tag.
+  4. Executes Alembic migrations (`alembic upgrade head`) before container restart.
+  5. Updates container service with `docker-compose.prod.yml`.
+  6. Polls health check (`GET /api/v1/health`) with retries.
+  7. Automatically rolls back to `.previous_image` if health verification fails.
+
+

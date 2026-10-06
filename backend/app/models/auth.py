@@ -51,5 +51,3 @@ class RefreshToken(Base):
         "User",
         back_populates="refresh_tokens",
     )
-
-

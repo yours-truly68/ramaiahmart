@@ -22,9 +22,7 @@ def register_payload(email: str, **overrides):
     return payload
 
 
-async def register_and_login(
-    client: AsyncClient, email: str, password: str = "SecurePassword123!"
-):
+async def register_and_login(client: AsyncClient, email: str, password: str = "SecurePassword123!"):
     reg = await client.post(
         "/api/v1/auth/register", json=register_payload(email, password=password)
     )
@@ -82,9 +80,7 @@ async def test_registration_normalizes_email_case() -> None:
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
         email = f"CaseStudy_{uuid.uuid4().hex[:6]}@MSRIT.edu"
 
-        reg_res = await client.post(
-            "/api/v1/auth/register", json=register_payload(f"  {email}  ")
-        )
+        reg_res = await client.post("/api/v1/auth/register", json=register_payload(f"  {email}  "))
         assert reg_res.status_code == 201
         assert reg_res.json()["email"] == email.lower()
 

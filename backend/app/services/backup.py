@@ -51,9 +51,7 @@ class BackupService:
         self.generations: list[BackupGeneration] = []
         self.active_backup: BackupGeneration | None = None
 
-    def create_generation(
-        self, db: Session, simulate_failure: bool = False
-    ) -> BackupGeneration:
+    def create_generation(self, db: Session, simulate_failure: bool = False) -> BackupGeneration:
         """Create a new backup snapshot generation from the current production state."""
         if simulate_failure:
             raise RuntimeError("Disaster recovery snapshot generation failed.")
@@ -104,14 +102,12 @@ class BackupService:
 
         # Enforce rolling retention: keep only the latest max_retention generations
         if len(self.generations) > self.max_retention:
-            retired = self.generations[:-self.max_retention]
-            self.generations = self.generations[-self.max_retention:]
+            retired = self.generations[: -self.max_retention]
+            self.generations = self.generations[-self.max_retention :]
             for r in retired:
                 logger.info("Retired old backup generation: %s", r.generation_id)
 
-    def synchronize(
-        self, db: Session, simulate_failure: bool = False
-    ) -> BackupGeneration:
+    def synchronize(self, db: Session, simulate_failure: bool = False) -> BackupGeneration:
         """Full disaster-recovery backup synchronization workflow:
 
         1. Create new backup generation from current production state.
@@ -141,9 +137,7 @@ class BackupService:
             self.active_backup = previous_backup
             raise
 
-    def is_user_in_backup(
-        self, generation: BackupGeneration, user_id: uuid.UUID
-    ) -> bool:
+    def is_user_in_backup(self, generation: BackupGeneration, user_id: uuid.UUID) -> bool:
         """Check if a user ID is represented in a specific backup generation."""
         return user_id in generation.user_ids
 
