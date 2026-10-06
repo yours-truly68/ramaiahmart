@@ -7,7 +7,7 @@ import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { ArrowDown, ArrowRight, ArrowUpRight, MapPin, Plus, Search, Tag, X } from "lucide-react";
 import { api } from "@/lib/api/client";
 import type { Category, Post, PostPage, PostType } from "@/lib/api/types";
-import { Badge, Button, Skeleton } from "@/components/ui";
+import { Button, Skeleton } from "@/components/ui";
 import { categoryStyle, categoryStyles, ListingImage, priceLabel, relativeTime } from "./presentation";
 import { DetailPanel } from "./panels";
 import { HowItWorks } from "./how-it-works";
@@ -19,7 +19,66 @@ function SearchForm({ value, onSearch }: { value: string; onSearch: (value: stri
   return <form role="search" className="hero-search" onSubmit={submit}><Search size={21} aria-hidden="true" /><label className="sr-only" htmlFor="market-search">Search the marketplace</label><input id="market-search" name="q" type="search" maxLength={200} value={input} onChange={event => setInput(event.target.value)} placeholder="Search for anything on campus..." /><button type="submit" aria-label="Search marketplace"><ArrowRight size={23} /></button></form>;
 }
 function PostCard({ post, href }: { post: Post; href: string }) {
-  return <article className="post-card"><Link href={href} scroll={false} className="post-card-link"><div className="post-card-visual"><ListingImage post={post} /><Badge className="post-badge" tone={post.type === "OFFER" ? "offer" : "request"}>{post.type}</Badge></div><div className="post-card-info"><p className="post-category">{post.category.name}</p><h3>{post.title}</h3><p className="post-price">{priceLabel(post)}{post.price_unit && <span> {post.price_unit}</span>}{post.type === "REQUEST" && post.price !== null && <span> · budget</span>}</p><div className="post-meta"><span className="post-location"><MapPin size={12} aria-hidden="true" /> MSRIT</span><time dateTime={post.created_at}>{relativeTime(post.created_at)}</time></div></div></Link></article>;
+  const isOffer = post.type === "OFFER";
+  const { tone } = categoryStyle(post.category.slug);
+  const isFree = isOffer && post.price !== null && Number(post.price) === 0;
+
+  return (
+    <article className={`post-card ${isOffer ? "post-card--offer" : "post-card--request"}`}>
+      <Link href={href} scroll={false} className="post-card-link">
+        <div className="post-card-visual">
+          <ListingImage post={post} />
+          <div className="post-card-badges">
+            <span className={`post-type-tag ${isOffer ? "post-type-tag--offer" : "post-type-tag--request"}`}>
+              <span className="post-type-tag-dot" aria-hidden="true" />
+              {isOffer ? "Offer" : "Request"}
+            </span>
+            <span className={`post-category-tag tone-${tone}`}>
+              {post.category.name}
+            </span>
+          </div>
+        </div>
+        <div className="post-card-info">
+          <h3 className="post-title" title={post.title}>{post.title}</h3>
+          <div className="post-price post-card-pricing">
+            {isOffer ? (
+              isFree ? (
+                <span className="post-price-free">Free</span>
+              ) : (
+                <div className="post-price-wrap">
+                  <span className="post-price-amount">{priceLabel(post)}</span>
+                  {post.price_unit && <span className="post-price-unit">{post.price_unit}</span>}
+                </div>
+              )
+            ) : (
+              <div className="post-request-budget">
+                {post.price !== null && Number(post.price) > 0 ? (
+                  <span className="post-budget-pill">
+                    <span className="post-budget-pill-label">Budget</span>
+                    <span className="post-budget-pill-val">{priceLabel(post)}</span>
+                  </span>
+                ) : (
+                  <span className="post-budget-pill post-budget-pill--open">
+                    {post.price !== null && Number(post.price) === 0 ? "Looking to borrow" : "Budget open"}
+                  </span>
+                )}
+                {post.price_unit && <span className="post-price-unit">{post.price_unit}</span>}
+              </div>
+            )}
+          </div>
+          <div className="post-meta post-card-footer">
+            <span className="post-location">
+              <MapPin size={12} aria-hidden="true" />
+              <span>MSRIT</span>
+            </span>
+            <time className="post-time" dateTime={post.created_at}>
+              {relativeTime(post.created_at)}
+            </time>
+          </div>
+        </div>
+      </Link>
+    </article>
+  );
 }
 export function FeedSkeleton() {
   return <div className="post-grid" aria-label="Loading recently posted items" aria-busy="true">{Array.from({ length: 6 }, (_, i) => <div className="post-skeleton" key={i}><Skeleton shape="image" /><Skeleton /><Skeleton /><Skeleton /></div>)}</div>;
