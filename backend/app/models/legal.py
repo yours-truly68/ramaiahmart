@@ -54,7 +54,6 @@ class LegalDocument(Base):
         Boolean,
         default=True,
         nullable=False,
-        index=True,
         doc="True if this is the active enforceable version",
     )
     created_at: Mapped[datetime] = mapped_column(
@@ -92,7 +91,6 @@ class LegalConsent(Base):
     document_type: Mapped[str] = mapped_column(
         String(32),
         nullable=False,
-        index=True,
         doc="'TERMS' or 'PRIVACY'",
     )
     document_version: Mapped[str] = mapped_column(

@@ -65,8 +65,12 @@ class Settings(BaseSettings):
     # AI Review & Moderation (Text: Automatic on post publish, Vision: Reactive on report)
     AI_TEXT_PROVIDER: str = "mock"  # "mock", "openai", "groq"
     AI_TEXT_MODEL: str = "mock_rule_engine_v1"
+    AI_TEXT_API_KEY: str | None = None
+    AI_TEXT_BASE_URL: str | None = None
     AI_VISION_PROVIDER: str = "mock"  # "mock", "openai"
     AI_VISION_MODEL: str = "mock_vision_v1"
+    AI_VISION_API_KEY: str | None = None
+    AI_VISION_BASE_URL: str | None = None
     AI_PROVIDER_API_KEY: str | None = None
     AI_PROVIDER_BASE_URL: str | None = None
     AI_REQUEST_TIMEOUT_SECONDS: float = 10.0
@@ -97,7 +101,7 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_production_security(self) -> "Settings":
-        """Fail fast if insecure fallback secrets are used in production."""
+        """Fail fast if insecure fallback secrets or development configs are used in production."""
         if self.APP_ENV == "production":
             dev_default = "dev-insecure-secret-key-change-in-production-min-32-chars"
             if not self.JWT_SECRET_KEY or self.JWT_SECRET_KEY == dev_default:
@@ -109,13 +113,46 @@ class Settings(BaseSettings):
                 raise ValueError("JWT_SECRET_KEY must be at least 32 characters in production.")
             if self.DEBUG:
                 raise ValueError("DEBUG mode must be set to False in production.")
-            if (
-                self.AI_TEXT_PROVIDER != "mock" or self.AI_VISION_PROVIDER != "mock"
-            ) and not self.AI_PROVIDER_API_KEY:
+
+            # Database check
+            if "localhost" in self.DATABASE_URL or "postgres:postgres" in self.DATABASE_URL:
                 raise ValueError(
-                    "AI_PROVIDER_API_KEY must be configured in production "
-                    "when external AI providers are enabled."
+                    "Production configuration requires an explicit, production DATABASE_URL. "
+                    "Cannot use default development postgres credentials or localhost."
                 )
+
+            # S3 / Object Storage check
+            if self.AWS_ACCESS_KEY_ID == "minioadmin" or self.AWS_SECRET_ACCESS_KEY == "minioadmin":
+                raise ValueError(
+                    "Production configuration requires dedicated S3 credentials. "
+                    "Cannot use default development minioadmin credentials."
+                )
+            if not self.AWS_ACCESS_KEY_ID or not self.AWS_SECRET_ACCESS_KEY:
+                raise ValueError(
+                    "AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY must be configured in production."
+                )
+
+            # CORS check
+            if any(origin == "*" for origin in self.CORS_ORIGINS):
+                raise ValueError(
+                    "Wildcard '*' CORS origins are not permitted in production with credentials."
+                )
+
+            # AI Provider checks
+            if self.AI_TEXT_PROVIDER != "mock":
+                text_key = self.AI_TEXT_API_KEY or self.AI_PROVIDER_API_KEY
+                if not text_key:
+                    raise ValueError(
+                        "AI_TEXT_API_KEY (or AI_PROVIDER_API_KEY) must be configured in "
+                        "production when external AI text provider is enabled."
+                    )
+            if self.AI_VISION_PROVIDER != "mock":
+                vision_key = self.AI_VISION_API_KEY or self.AI_PROVIDER_API_KEY
+                if not vision_key:
+                    raise ValueError(
+                        "AI_VISION_API_KEY (or AI_PROVIDER_API_KEY) must be configured in "
+                        "production when external AI vision provider is enabled."
+                    )
         return self
 
     def is_university_email(self, email: str) -> bool:
