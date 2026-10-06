@@ -666,4 +666,82 @@ Detailed deployment workflows and server setup procedures are maintained in [`do
   6. Polls health check (`GET /api/v1/health`) with retries.
   7. Automatically rolls back to `.previous_image` if health verification fails.
 
+---
+
+## 23. AI Review & Moderation (Phase 7)
+
+RamaiahMart implements lightweight, cost-controlled, provider-independent automated content moderation.
+
+> **Important Safety Note:** Automated AI moderation is a safety filter designed to catch obviously prohibited content and spam. It is **not** a guarantee that every published listing is safe, authentic, or legitimate. In particular, authenticity reports require human/admin judgment.
+
+### 23.1. Two Moderation Paths
+
+1. **Text Review (Automatic):**
+   - Evaluates listing `title` and `description` during post publication (`POST /posts/{id}/publish`).
+   - Checks for: explicit sexual content, hate speech, abusive text, threats, scams, spam, and prohibited goods/services.
+   - Does NOT attempt to verify item authenticity from text alone.
+   - Outcomes:
+     - `APPROVE` (`ALLOW`): Listing transitions to `PUBLISHED`.
+     - `REVIEW` (`FLAG`): Listing transitions to `PENDING_REVIEW` (fails closed).
+     - `REJECT`: Listing transitions to `REJECTED`.
+
+2. **Vision Review (Reactive):**
+   - Vision review is **never** executed automatically for every uploaded photo.
+   - Vision review is invoked **only** when a published post is reported for an image-related reason:
+     - `EXPLICIT_IMAGE` (triggers vision review)
+     - `IMAGE_MISMATCH` (triggers vision review)
+   - The following reasons **never** invoke the vision model and route directly to human admin review:
+     - `AUTHENTICITY_SUSPICION`
+     - `SCAM_OR_MISLEADING`
+     - `SPAM`
+     - `OTHER`
+
+### 23.2. Structured AI Output Contract
+
+External AI models must return structured JSON matching `AIModerationOutput`:
+
+```json
+{
+  "decision": "ALLOW" | "FLAG" | "REJECT",
+  "risk_score": 0.04,
+  "reason_codes": ["SAFE_LISTING"]
+}
+```
+
+- Standardized decisions normalize: `ALLOW`/`APPROVE` -> `APPROVE`, `FLAG`/`REVIEW` -> `REVIEW`, `REJECT` -> `REJECT`.
+- If a model returns malformed JSON or times out: the system **fails closed** to `REVIEW` with reason `PROVIDER_FAILURE_FALLBACK`.
+
+### 23.3. Prompt Injection Defense & Security
+
+- User-supplied titles, descriptions, and categories are treated strictly as **untrusted data to classify**, never instructions.
+- System prompts explicitly instruct external models to ignore commands embedded inside listing text.
+- Inputs are strictly bounded before calling models:
+  - `title`: max 255 characters
+  - `description`: max 5000 characters
+  - `report description`: max 1000 characters
+  Oversized inputs are rejected by system guardrails.
+
+### 23.4. Cost Control & Report Abuse Protection
+
+- **No Infinite Retries:** Retries are bounded (`AI_MAX_RETRIES=1`, timeout 10.0s).
+- **Vision Deduplication:** Recent vision moderation results are cached for 24 hours per post to prevent duplicate expensive calls.
+- **Report Rate Limiting:** Enforced via `REPORTS_RATE_LIMIT_PER_USER_WINDOW` (10 per hour per user).
+- **Duplicate Prevention:** A user cannot submit multiple open reports for the same listing.
+- **Author Protection:** Authors cannot report their own listings.
+
+### 23.5. Environment Variables
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `AI_TEXT_PROVIDER` | `mock` | Provider for text moderation (`mock`, `openai`, `groq`) |
+| `AI_TEXT_MODEL` | `mock_rule_engine_v1` | Model identifier (e.g. `gpt-4o-mini`, `llama-3.1-8b-instant`) |
+| `AI_VISION_PROVIDER` | `mock` | Provider for vision moderation (`mock`, `openai`, `groq`) |
+| `AI_VISION_MODEL` | `mock_vision_v1` | Model identifier (e.g. `gpt-4o-mini`) |
+| `AI_PROVIDER_API_KEY` | `None` | External provider API key (server-side only) |
+| `AI_PROVIDER_BASE_URL` | `None` | Custom API base URL (e.g. Groq endpoint) |
+| `AI_REQUEST_TIMEOUT_SECONDS` | `10.0` | Timeout for external AI calls |
+| `REPORTS_RATE_LIMIT_PER_USER_WINDOW` | `10` | Max reports per user window |
+| `REPORTS_RATE_LIMIT_WINDOW_SECONDS` | `3600` | Window duration in seconds (1 hour) |
+
+
 

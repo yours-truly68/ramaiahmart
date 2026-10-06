@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from app.models.category import Category
     from app.models.conversation import Conversation
     from app.models.moderation import ModerationResult
+    from app.models.report import Report
     from app.models.user import User
 
 
@@ -121,6 +122,11 @@ class Post(Base):
     )
     moderation_results: Mapped[list["ModerationResult"]] = relationship(
         "ModerationResult",
+        back_populates="post",
+        cascade="all, delete-orphan",
+    )
+    reports: Mapped[list["Report"]] = relationship(
+        "Report",
         back_populates="post",
         cascade="all, delete-orphan",
     )

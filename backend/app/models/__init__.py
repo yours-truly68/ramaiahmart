@@ -7,6 +7,7 @@ from app.models.legal import LegalConsent, LegalDocument
 from app.models.message import Message
 from app.models.moderation import ModerationDecision, ModerationResult
 from app.models.post import Post, PostImage, PostStatus, PostType
+from app.models.report import Report, ReportReason, ReportStatus
 from app.models.user import User, UserStatus
 
 __all__ = [
@@ -22,6 +23,9 @@ __all__ = [
     "PostStatus",
     "PostType",
     "RefreshToken",
+    "Report",
+    "ReportReason",
+    "ReportStatus",
     "User",
     "UserStatus",
 ]

@@ -2,16 +2,22 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { MessageSquare, Pencil, Trash2, XCircle } from "lucide-react";
+import { Flag, MessageSquare, Pencil, Trash2, XCircle } from "lucide-react";
 import { api, ApiError, errorMessage } from "@/lib/api/client";
 import { useSession } from "@/lib/auth/session";
-import type { Post } from "@/lib/api/types";
+import type { Post, ReportReason } from "@/lib/api/types";
 import { Badge, Button, Skeleton, StatusBadge } from "@/components/ui";
 import { Dialog } from "./dialog";
 import { ListingImage, priceLabel, relativeTime } from "./presentation";
 
 export function DetailPanel({ id, onClose }: { id: string; onClose: () => void }) {
   const [messagingNotice, setMessagingNotice] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportReason, setReportReason] = useState<ReportReason>("EXPLICIT_IMAGE");
+  const [reportDescription, setReportDescription] = useState("");
+  const [reportSubmitting, setReportSubmitting] = useState(false);
+  const [reportSuccess, setReportSuccess] = useState(false);
+  const [reportError, setReportError] = useState("");
   const session = useSession();
   const client = useQueryClient();
   const query = useQuery({ queryKey: ["post", id], queryFn: ({ signal }) => api<Post>(`posts/${id}`, { signal }) });
@@ -79,7 +85,114 @@ export function DetailPanel({ id, onClose }: { id: string; onClose: () => void }
               </p>
             </div>
           )}
+
+          <div style={{ marginTop: "12px", textAlign: "center" }}>
+            <button
+              type="button"
+              className="text-action"
+              style={{ fontSize: "13px", color: "var(--muted-foreground)", display: "inline-flex", alignItems: "center", gap: "6px" }}
+              onClick={() => setReportOpen(true)}
+            >
+              <Flag size={14} /> Report this listing
+            </button>
+          </div>
         </div>
+      )}
+
+      {reportOpen && (
+        <Dialog title="Report listing" onClose={() => { setReportOpen(false); setReportSuccess(false); setReportError(""); }}>
+          {reportSuccess ? (
+            <div className="panel-intro" role="status" style={{ textAlign: "center", padding: "16px 0" }}>
+              <strong style={{ fontSize: "16px", color: "var(--foreground)", display: "block", marginBottom: "8px" }}>
+                Report received
+              </strong>
+              <p style={{ fontSize: "14px", color: "var(--muted-foreground)", marginBottom: "16px" }}>
+                Thank you for helping keep the Ramaiah campus community safe. Our moderation team has recorded this report.
+              </p>
+              <Button variant="secondary" onClick={() => { setReportOpen(false); setReportSuccess(false); }}>
+                Done
+              </Button>
+            </div>
+          ) : (
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                setReportSubmitting(true);
+                setReportError("");
+                try {
+                  await api("reports", {
+                    method: "POST",
+                    body: JSON.stringify({
+                      post_id: id,
+                      reason: reportReason,
+                      description: reportDescription.trim() || null,
+                    }),
+                  });
+                  setReportSuccess(true);
+                } catch (err) {
+                  setReportError(errorMessage(err));
+                } finally {
+                  setReportSubmitting(false);
+                }
+              }}
+              style={{ display: "flex", flexDirection: "column", gap: "14px" }}
+            >
+              <p style={{ fontSize: "13px", color: "var(--muted-foreground)", margin: 0 }}>
+                Help us understand what’s wrong with this listing. If reporting an image, our AI safety system will automatically review it.
+              </p>
+
+              <div className="rm-field">
+                <label htmlFor="report-reason" className="rm-label">
+                  Reason <span className="rm-required">(required)</span>
+                </label>
+                <select
+                  id="report-reason"
+                  className="rm-input"
+                  value={reportReason}
+                  onChange={(e) => setReportReason(e.target.value as ReportReason)}
+                  required
+                >
+                  <option value="EXPLICIT_IMAGE">Explicit or inappropriate image</option>
+                  <option value="IMAGE_MISMATCH">Image does not match description</option>
+                  <option value="AUTHENTICITY_SUSPICION">Suspicion of counterfeit / fake item</option>
+                  <option value="SCAM_OR_MISLEADING">Scam or misleading listing</option>
+                  <option value="SPAM">Spam or duplicate listing</option>
+                  <option value="OTHER">Other concern</option>
+                </select>
+              </div>
+
+              <div className="rm-field">
+                <label htmlFor="report-desc" className="rm-label">
+                  Additional details (optional)
+                </label>
+                <textarea
+                  id="report-desc"
+                  className="rm-input"
+                  rows={3}
+                  maxLength={1000}
+                  placeholder="Tell us what you noticed…"
+                  value={reportDescription}
+                  onChange={(e) => setReportDescription(e.target.value)}
+                />
+              </div>
+
+              {reportError && (
+                <p className="form-error" role="alert" style={{ fontSize: "13px" }}>
+                  {reportError}
+                </p>
+              )}
+
+              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "8px" }}>
+                <Button variant="secondary" type="button" onClick={() => setReportOpen(false)}>
+                  Cancel
+                </Button>
+                <Button variant="destructive" type="submit" disabled={reportSubmitting}>
+                  {reportSubmitting ? "Submitting…" : "Submit report"}
+                </Button>
+              </div>
+            </form>
+          )}
+        </Dialog>
       )}
     </article>}
   </Dialog>;

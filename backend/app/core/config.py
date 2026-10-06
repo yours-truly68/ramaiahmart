@@ -62,6 +62,20 @@ class Settings(BaseSettings):
         "192.168.0.0/16",
     ]
 
+    # AI Review & Moderation (Text: Automatic on post publish, Vision: Reactive on report)
+    AI_TEXT_PROVIDER: str = "mock"  # "mock", "openai", "groq"
+    AI_TEXT_MODEL: str = "mock_rule_engine_v1"
+    AI_VISION_PROVIDER: str = "mock"  # "mock", "openai"
+    AI_VISION_MODEL: str = "mock_vision_v1"
+    AI_PROVIDER_API_KEY: str | None = None
+    AI_PROVIDER_BASE_URL: str | None = None
+    AI_REQUEST_TIMEOUT_SECONDS: float = 10.0
+    AI_MAX_RETRIES: int = 1
+
+    # Report Abuse Protection & Rate Limiting
+    REPORTS_RATE_LIMIT_PER_USER_WINDOW: int = 10
+    REPORTS_RATE_LIMIT_WINDOW_SECONDS: int = 3600
+
     @field_validator(
         "ALLOWED_EMAIL_DOMAINS",
         "ALLOWED_IMAGE_MIME_TYPES",
@@ -95,6 +109,13 @@ class Settings(BaseSettings):
                 raise ValueError("JWT_SECRET_KEY must be at least 32 characters in production.")
             if self.DEBUG:
                 raise ValueError("DEBUG mode must be set to False in production.")
+            if (
+                self.AI_TEXT_PROVIDER != "mock" or self.AI_VISION_PROVIDER != "mock"
+            ) and not self.AI_PROVIDER_API_KEY:
+                raise ValueError(
+                    "AI_PROVIDER_API_KEY must be configured in production "
+                    "when external AI providers are enabled."
+                )
         return self
 
     def is_university_email(self, email: str) -> bool:

@@ -5,6 +5,7 @@ from app.api.v1.categories import router as categories_router
 from app.api.v1.legal import router as legal_router
 from app.api.v1.media import router as media_router
 from app.api.v1.posts import router as posts_router
+from app.api.v1.reports import router as reports_router
 from app.api.v1.users import router as users_router
 
 router = APIRouter()
@@ -24,3 +25,4 @@ router.include_router(categories_router)
 router.include_router(posts_router)
 router.include_router(media_router)
 router.include_router(legal_router)
+router.include_router(reports_router)

@@ -10,6 +10,7 @@ from app.db.base import Base
 
 if TYPE_CHECKING:
     from app.models.post import Post
+    from app.models.report import Report
 
 
 class ModerationDecision(enum.StrEnum):
@@ -55,6 +56,11 @@ class ModerationResult(Base):
         String(100),
         nullable=True,
     )
+    report_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("reports.id", ondelete="CASCADE"),
+        index=True,
+        nullable=True,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -65,4 +71,7 @@ class ModerationResult(Base):
     post: Mapped["Post"] = relationship(
         "Post",
         back_populates="moderation_results",
+    )
+    report: Mapped["Report | None"] = relationship(
+        "Report",
     )

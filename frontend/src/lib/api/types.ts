@@ -42,3 +42,27 @@ export type DeletionRequestResponse = {
 export type AuthConfig = { allowed_email_domains: string[]; password_min_length: number };
 export type MediaConfig = { max_file_size: number; content_types: string[] };
 export type UserPostStats = { listings: number; requests: number; published: number };
+
+export type ReportReason =
+  | "EXPLICIT_IMAGE"
+  | "IMAGE_MISMATCH"
+  | "AUTHENTICITY_SUSPICION"
+  | "SCAM_OR_MISLEADING"
+  | "SPAM"
+  | "OTHER";
+
+export type ReportStatus = "OPEN" | "AI_REVIEWED" | "UNDER_REVIEW" | "RESOLVED" | "DISMISSED";
+
+export type ReportResponse = {
+  id: string;
+  post_id: string;
+  reporter_id: string;
+  reason: ReportReason;
+  description: string | null;
+  status: ReportStatus;
+  ai_reviewed: boolean;
+  ai_decision: string | null;
+  ai_reason: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+};

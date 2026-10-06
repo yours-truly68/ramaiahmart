@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from app.models.legal import LegalConsent
     from app.models.message import Message
     from app.models.post import Post
+    from app.models.report import Report
 
 
 class UserStatus(enum.StrEnum):
@@ -140,5 +141,10 @@ class User(Base):
     legal_consents: Mapped[list["LegalConsent"]] = relationship(
         "LegalConsent",
         back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    reports: Mapped[list["Report"]] = relationship(
+        "Report",
+        back_populates="reporter",
         cascade="all, delete-orphan",
     )
