@@ -63,11 +63,11 @@ class Settings(BaseSettings):
     ]
 
     # AI Review & Moderation (Text: Automatic on post publish, Vision: Reactive on report)
-    AI_TEXT_PROVIDER: str = "mock"  # "mock", "openai", "groq"
+    AI_TEXT_PROVIDER: str = "mock"  # "mock", "groq", "openai", "vercel", "gateway"
     AI_TEXT_MODEL: str = "mock_rule_engine_v1"
     AI_TEXT_API_KEY: str | None = None
     AI_TEXT_BASE_URL: str | None = None
-    AI_VISION_PROVIDER: str = "mock"  # "mock", "openai"
+    AI_VISION_PROVIDER: str = "mock"  # "mock", "vercel", "gateway", "openai", "groq"
     AI_VISION_MODEL: str = "mock_vision_v1"
     AI_VISION_API_KEY: str | None = None
     AI_VISION_BASE_URL: str | None = None

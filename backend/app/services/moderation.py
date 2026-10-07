@@ -493,7 +493,7 @@ def get_configured_text_provider() -> TextModerationProvider:
     if provider_name == "mock":
         return MockModerationProvider()
 
-    if provider_name in ("openai", "groq"):
+    if provider_name in ("openai", "groq", "vercel", "gateway"):
         api_key = settings.AI_TEXT_API_KEY or settings.AI_PROVIDER_API_KEY
         if not api_key:
             if settings.APP_ENV == "production":
@@ -509,6 +509,8 @@ def get_configured_text_provider() -> TextModerationProvider:
         base_url = settings.AI_TEXT_BASE_URL or settings.AI_PROVIDER_BASE_URL
         if provider_name == "groq" and not base_url:
             base_url = "https://api.groq.com/openai/v1"
+        elif provider_name in ("vercel", "gateway") and not base_url:
+            base_url = "https://ai-gateway.vercel.sh/v1"
 
         return OpenAICompatibleTextProvider(
             api_key=api_key,
@@ -530,7 +532,7 @@ def get_configured_vision_provider() -> VisionModerationProvider:
     if provider_name == "mock":
         return MockModerationProvider()
 
-    if provider_name in ("openai", "groq"):
+    if provider_name in ("openai", "groq", "vercel", "gateway"):
         api_key = settings.AI_VISION_API_KEY or settings.AI_PROVIDER_API_KEY
         if not api_key:
             if settings.APP_ENV == "production":
@@ -546,6 +548,8 @@ def get_configured_vision_provider() -> VisionModerationProvider:
         base_url = settings.AI_VISION_BASE_URL or settings.AI_PROVIDER_BASE_URL
         if provider_name == "groq" and not base_url:
             base_url = "https://api.groq.com/openai/v1"
+        elif provider_name in ("vercel", "gateway") and not base_url:
+            base_url = "https://ai-gateway.vercel.sh/v1"
 
         return OpenAICompatibleVisionProvider(
             api_key=api_key,

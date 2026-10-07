@@ -630,3 +630,41 @@ def test_openai_compatible_vision_provider_sends_image_url_and_rejects_raw_key(m
             post_description="Desc",
             reason="EXPLICIT_IMAGE",
         )
+
+
+def test_factory_groq_text_and_vercel_gateway_vision_configuration(monkeypatch):
+    """Verify provider factories initialize Groq for text and Vercel AI Gateway for vision."""
+    from app.core.config import settings
+    from app.services.moderation import (
+        OpenAICompatibleTextProvider,
+        OpenAICompatibleVisionProvider,
+        get_configured_text_provider,
+        get_configured_vision_provider,
+    )
+
+    monkeypatch.setattr(settings, "AI_TEXT_PROVIDER", "groq")
+    monkeypatch.setattr(settings, "AI_TEXT_API_KEY", "gsk_text_secret_key")
+    monkeypatch.setattr(settings, "AI_TEXT_MODEL", "llama-3.3-70b-versatile")
+    monkeypatch.setattr(settings, "AI_TEXT_BASE_URL", None)
+
+    monkeypatch.setattr(settings, "AI_VISION_PROVIDER", "vercel")
+    monkeypatch.setattr(settings, "AI_VISION_API_KEY", "vck_gateway_secret_key")
+    monkeypatch.setattr(settings, "AI_VISION_MODEL", "openai/gpt-4o-mini")
+    monkeypatch.setattr(settings, "AI_VISION_BASE_URL", None)
+
+    text_prov = get_configured_text_provider()
+    assert isinstance(text_prov, OpenAICompatibleTextProvider)
+    assert text_prov.api_key == "gsk_text_secret_key"
+    assert text_prov.model == "llama-3.3-70b-versatile"
+    assert text_prov.base_url == "https://api.groq.com/openai/v1"
+
+    vision_prov = get_configured_vision_provider()
+    assert isinstance(vision_prov, OpenAICompatibleVisionProvider)
+    assert vision_prov.api_key == "vck_gateway_secret_key"
+    assert vision_prov.model == "openai/gpt-4o-mini"
+    assert vision_prov.base_url == "https://ai-gateway.vercel.sh/v1"
+
+    # Verify custom base URL override is respected
+    monkeypatch.setattr(settings, "AI_VISION_BASE_URL", "https://custom.gateway.com/v1")
+    custom_vision_prov = get_configured_vision_provider()
+    assert custom_vision_prov.base_url == "https://custom.gateway.com/v1"
